@@ -29,7 +29,7 @@ export async function onRequestPost(context) {
             contents: [{
               parts: [
                 { inlineData: { mimeType: photo.mediaType, data: photo.base64 } },
-                { text: "Convert this person into a stylized Korean manhwa/webtoon illustration character. Keep the facial features and proportions similar but render as a detailed anime/manhwa style character illustration. Clean line art, expressive eyes, artistic style. Do not make it photorealistic." }
+                { text: "Create a manhwa/webtoon style illustration of this exact person. You MUST preserve: the exact same face shape, eye shape and spacing, nose shape, lip shape, jawline, hairstyle and hair color, and overall facial proportions. Only change the rendering style to clean Korean manhwa illustration with line art. The result must be immediately recognizable as the same person. Do not alter any facial features. Do not idealize or beautify. Faithful likeness is the top priority." }
               ]
             }],
             generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
