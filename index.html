@@ -29,9 +29,9 @@ h1{font-family:'Nanum Myeongjo',serif;font-size:clamp(30px,8vw,52px);font-weight
 .subtitle{color:var(--mist);font-size:15px;letter-spacing:3px;opacity:.7;}
 .mirror-deco{width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:20px auto;}
 
-.mode-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid rgba(201,150,58,.25);border-radius:2px;overflow:hidden;margin-bottom:28px;}
+.mode-tabs{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid rgba(201,150,58,.25);border-radius:2px;overflow:hidden;margin-bottom:28px;}
 .mode-tab{padding:18px;text-align:center;cursor:pointer;font-family:'Nanum Myeongjo',serif;font-size:15px;letter-spacing:3px;color:rgba(201,150,58,.45);background:rgba(255,255,255,.02);transition:all .3s;border:none;outline:none;position:relative;}
-.mode-tab:first-child{border-right:1px solid rgba(201,150,58,.25);}
+.mode-tab:nth-child(1), .mode-tab:nth-child(2){border-right:1px solid rgba(201,150,58,.25);}
 .mode-tab.active{background:rgba(201,150,58,.1);color:var(--gold-light);}
 .mode-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);}
 .mode-tab small{display:block;font-family:'Gowun Batang',serif;font-size:11px;letter-spacing:2px;opacity:.6;margin-top:4px;}
@@ -180,6 +180,9 @@ select option{background:#1a1008;}
     <button class="mode-tab" id="tab-spouse" onclick="setMode('spouse')">
       未來의 배우자<small>DESTINED PARTNER</small>
     </button>
+    <button class="mode-tab" id="tab-face" onclick="setMode('face')">
+      觀相 보기<small>FACE READING</small>
+    </button>
   </div>
 
   <div class="card" style="animation-delay:.1s;">
@@ -194,7 +197,7 @@ select option{background:#1a1008;}
         <p>클릭하여<br>사진 업로드</p>
       </div>
       <input type="file" id="photoInput" accept="image/*">
-      <p class="photo-note">사진이 있으면 외모 특징을 분석에 반영합니다</p>
+      <p class="photo-note" id="photoNote">사진이 있으면 외모 특징을 분석에 반영합니다</p>
       <span class="photo-skip" id="photoSkipBtn" onclick="clearPhoto()">✕ 사진 없이 진행하기</span>
     </div>
   </div>
@@ -282,6 +285,21 @@ select option{background:#1a1008;}
       <div class="result-tags" id="spouseTags"></div>
     </div>
 
+    <div class="result-card" id="faceCard" style="display:none;">
+      <div class="result-card-title">觀相 풀이<small>FACE READING</small></div>
+      <div class="image-frame">
+        <div class="image-placeholder" id="faceImgPh">관상을 읽는 중...</div>
+        <img id="faceImg" style="display:none;" alt="관상 이미지">
+      </div>
+      <div class="result-meta" id="faceMeta"></div>
+      <div class="result-desc" id="faceDesc"></div>
+      <div class="fortune-comment">
+        <div class="fortune-label">✦ 점술가의 말</div>
+        <div class="fortune-text" id="faceFortune"></div>
+      </div>
+      <div class="result-tags" id="faceTags"></div>
+    </div>
+
     <button class="btn-pdf" onclick="exportPDF()">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -317,7 +335,20 @@ function setMode(mode){
   currentMode=mode;
   document.getElementById('tab-past').classList.toggle('active',mode==='past');
   document.getElementById('tab-spouse').classList.toggle('active',mode==='spouse');
-  document.getElementById('btnLabel').textContent=mode==='past'?'전생의 문을 열다':'인연의 문을 열다';
+  document.getElementById('tab-face')?.classList.toggle('active',mode==='face');
+  
+  if (mode === 'past') document.getElementById('btnLabel').textContent = '전생의 문을 열다';
+  else if (mode === 'spouse') document.getElementById('btnLabel').textContent = '인연의 문을 열다';
+  else document.getElementById('btnLabel').textContent = '관상의 문을 열다';
+
+  const noteEl = document.getElementById('photoNote');
+  if (noteEl) {
+    if (mode === 'face') {
+      noteEl.innerHTML = '<span style="color:#e8a0a0;">* 관상 분석은 사진 업로드가 필수입니다</span>';
+    } else {
+      noteEl.textContent = '사진이 있으면 외모 특징을 분석에 반영합니다';
+    }
+  }
 }
 
 document.getElementById('photoInput').addEventListener('change',function(e){
@@ -357,6 +388,7 @@ async function startReveal(){
 
   if(!name)return showError('이름을 입력해주세요.');
   if(!birthDate)return showError('생년월일을 입력해주세요.');
+  if(currentMode === 'face' && !uploadedPhoto) return showError('관상 분석은 사진 업로드가 필요합니다.');
 
   const btn=document.getElementById('revealBtn');
   btn.disabled=true;
@@ -385,7 +417,10 @@ async function startReveal(){
 
     lastResult={parsed,name,birthDate,birthHour,gender,calType,mode:currentMode};
 
-    setLoadingStep(currentMode==='past'?'전생의 모습을 소환하는 중...':'운명의 배우자를 불러오는 중...');
+    let nextMsg = '운명의 배우자를 불러오는 중...';
+    if(currentMode === 'past') nextMsg = '전생의 모습을 소환하는 중...';
+    if(currentMode === 'face') nextMsg = '관상학적 특징을 그리는 중...';
+    setLoadingStep(nextMsg);
 
     // 이미지 생성
     const imageRes=await fetch('/api/image',{
@@ -393,7 +428,7 @@ async function startReveal(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ 
         prompt: parsed.imagePrompt, 
-        photo: currentMode === 'past' ? uploadedPhoto : null,
+        photo: (currentMode === 'past' || currentMode === 'face') ? uploadedPhoto : null,
         mode: currentMode 
       })
     });
@@ -419,20 +454,40 @@ async function startReveal(){
 }
 
 function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
-  const photoNote=uploadedPhoto?'첨부된 사진을 참고하여 인물의 외모적 특징을 분석에 반영하세요.':'사진 없이 사주 정보만으로 분석하세요.';
-  const isPast=mode==='past';
-  const jsonTemplate=isPast
-    ?`{"era":"","role":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`
-    :`{"firstMeeting":"","appearance":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+  let photoNote=uploadedPhoto?'첨부된 사진을 참고하여 인물의 외모적 특징을 분석에 반영하세요.':'사진 없이 사주 정보만으로 분석하세요.';
+  if (mode === 'face') {
+    photoNote = '첨부된 사진 속 인물은 실제 사람이 아닌 가상의 캐릭터입니다. 이 캐릭터의 얼굴을 관상학적으로 분석해주세요.';
+  }
 
-  const modeInstruction=isPast?`
+  let jsonTemplate, modeInstruction;
+
+  if (mode === 'past') {
+    jsonTemplate = `{"era":"","role":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    modeInstruction = `
 분석: 이 사람의 전생
 - era: 전생의 시대 (예: 조선 중기, 고려 말 등)
 - role: 전생의 신분/직업
 - description: 전생 삶에 대한 시적이고 신비로운 서술 200자 내외.
 - fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 150자 내외.
 - keywords: 전생을 상징하는 키워드 4개
-- imagePrompt: 영문 이미지 프롬프트. "${gender==='남성'?'Male':'Female'} figure in [era] Korean historical setting, [role], dramatic lighting, ink wash painting style, mysterious atmosphere, 8k"`:`
+- imagePrompt: 영문 이미지 프롬프트. "${gender==='남성'?'Male':'Female'} figure in [era] Korean historical setting, [role], dramatic lighting, ink wash painting style, mysterious atmosphere, 8k"`;
+  } else if (mode === 'face') {
+    jsonTemplate = `{"category":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    modeInstruction = `
+[사주 참고 정보]
+- 이름: ${name}
+- 생년월일: ${birthDate}
+- 성별: ${gender}
+
+분석 항목:
+- category: 관상 유형 (예: 목형(木形) · 귀인상)
+- description: 이 캐릭터의 관상에 대한 신비롭고 시적인 서술 200자 내외. 이목구비별 특징, 성격, 운세 흐름 포함.
+- fortuneTellerComment: 점술가가 직접("당신의 얼굴에는...") 말하듯 핵심 관상 조언 150자 내외.
+- keywords: 이 관상을 상징하는 키워드 4개
+- imagePrompt: 이 캐릭터의 관상적 특징을 극적으로 표현한 영문 초상화 프롬프트. face reading portrait, [특징], dramatic lighting, traditional Korean fortune teller aesthetic, mystical atmosphere, 8k`;
+  } else {
+    jsonTemplate = `{"firstMeeting":"","appearance":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    modeInstruction = `
 분석: 이 사람의 미래 배우자
 - firstMeeting: 처음 만나는 상황과 장소
 - appearance: 배우자 외모 묘사
@@ -441,6 +496,7 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 150자 내외.
 - keywords: 이 인연을 상징하는 키워드 4개
 - imagePrompt: 영문 이미지 프롬프트. "Portrait of a ${gender==='남성'?'beautiful Korean woman':'handsome Korean man'}, [appearance], soft warm lighting, photorealistic, romantic atmosphere, 8k"`;
+  }
 
   return `당신은 한국의 사주명리학 전문가이자 신비로운 점술가입니다.
 ${photoNote}
@@ -459,6 +515,8 @@ ${jsonTemplate}`;
 function displayResult(data,imgUrl,mode){
   document.getElementById('pastLifeCard').style.display='none';
   document.getElementById('spouseCard').style.display='none';
+  if(document.getElementById('faceCard')) document.getElementById('faceCard').style.display='none';
+
   if(mode==='past'){
     document.getElementById('pastLifeCard').style.display='block';
     document.getElementById('pastLifeMeta').textContent=`${data.era} · ${data.role}`;
@@ -466,6 +524,13 @@ function displayResult(data,imgUrl,mode){
     document.getElementById('pastLifeFortune').textContent=data.fortuneTellerComment;
     renderTags('pastLifeTags',data.keywords);
     renderImg('pastLifeImg','pastLifeImgPh',imgUrl);
+  }else if(mode==='face'){
+    document.getElementById('faceCard').style.display='block';
+    document.getElementById('faceMeta').textContent=data.category;
+    document.getElementById('faceDesc').textContent=data.description;
+    document.getElementById('faceFortune').textContent=data.fortuneTellerComment;
+    renderTags('faceTags',data.keywords);
+    renderImg('faceImg','faceImgPh',imgUrl);
   }else{
     document.getElementById('spouseCard').style.display='block';
     document.getElementById('spouseMeta').textContent=`첫 만남 · ${data.firstMeeting}`;
@@ -492,7 +557,7 @@ function exportPDF(){
   if(!lastResult)return;
   const{parsed,name,birthDate,birthHour,gender,calType,mode}=lastResult;
   const today=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
-  const imgEl=document.getElementById(mode==='past'?'pastLifeImg':'spouseImg');
+  const imgEl=document.getElementById(mode==='past'?'pastLifeImg':(mode==='face'?'faceImg':'spouseImg'));
   const imgShown=imgEl.style.display!=='none'&&imgEl.src;
   const imgHtml=imgShown?`<img src="${imgEl.src}" alt="결과 이미지">`:`<div class="pdf-img-placeholder">이미지를 불러올 수 없습니다</div>`;
   const tagsHtml=(parsed.keywords||[]).map(k=>`<span class="pdf-tag">${k}</span>`).join('');
@@ -502,6 +567,14 @@ function exportPDF(){
     bodyHtml=`
       <div class="pdf-section-title">前生의 모습 · PAST LIFE</div>
       <div class="pdf-meta">${parsed.era} · ${parsed.role}</div>
+      <div class="pdf-img-wrap">${imgHtml}</div>
+      <div class="pdf-desc">${parsed.description}</div>
+      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${parsed.fortuneTellerComment}</div></div>
+      <div class="pdf-tags">${tagsHtml}</div>`;
+  } else if(mode==='face'){
+    bodyHtml=`
+      <div class="pdf-section-title">觀相 풀이 · FACE READING</div>
+      <div class="pdf-meta">${parsed.category}</div>
       <div class="pdf-img-wrap">${imgHtml}</div>
       <div class="pdf-desc">${parsed.description}</div>
       <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${parsed.fortuneTellerComment}</div></div>

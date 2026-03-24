@@ -23,7 +23,7 @@ export async function onRequestPost(context) {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
         
         const reqParts = [];
-        if (mode === 'past' && photo) {
+        if ((mode === 'past' || mode === 'face') && photo) {
           reqParts.push({ inlineData: { mimeType: photo.mediaType, data: photo.base64 } });
           reqParts.push({ text: prompt + ", the face should closely resemble the person in the reference photo" });
         } else {
