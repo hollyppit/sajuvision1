@@ -396,20 +396,42 @@ async function startReveal(){
   document.getElementById('resultSection').classList.remove('show');
 
   try {
-    setLoadingStep('사주의 기운을 읽는 중...');
-    const prompt=buildPrompt(name,birthDate,birthHour,gender,calType,currentMode);
+    let caricaturePhoto = uploadedPhoto;
+    let caricatureData = null;
 
-    // Cloudflare Function 호출
-    const analyzeRes=await fetch('/api/analyze',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({prompt,photo:uploadedPhoto})
-    });
-    if(!analyzeRes.ok){
-      const e=await analyzeRes.json().catch(()=>({}));
-      throw new Error(e.error||`분석 서버 오류: ${analyzeRes.status}`);
+    if (currentMode === 'face') {
+      // 1단계: 사진을 캐리커처로 변환
+      setLoadingStep('사진을 캐릭터로 변환하는 중...');
+      const caricatureRes = await fetch('/api/caricature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo: uploadedPhoto })
+      });
+      if (!caricatureRes.ok) {
+        const e = await caricatureRes.json().catch(() => ({}));
+        throw new Error(e.error || '캐리커처 변환 실패');
+      }
+      caricatureData = await caricatureRes.json();
+      caricaturePhoto = {
+        base64: caricatureData.imageData,
+        mediaType: caricatureData.mimeType
+      };
     }
-    const {text}=await analyzeRes.json();
+
+    setLoadingStep(currentMode === 'face' ? '관상을 분석하는 중...' : '사주의 기운을 읽는 중...');
+    const prompt = buildPrompt(name, birthDate, birthHour, gender, calType, currentMode);
+
+    // Cloudflare Function 호출 (분석)
+    const analyzeRes = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, photo: caricaturePhoto })
+    });
+    if (!analyzeRes.ok) {
+      const e = await analyzeRes.json().catch(() => ({}));
+      throw new Error(e.error || `분석 서버 오류: ${analyzeRes.status}`);
+    }
+    const { text } = await analyzeRes.json();
 
     let parsed;
     try {
@@ -422,34 +444,40 @@ async function startReveal(){
       throw new Error(`분석 결과 해석 실패: ${e.message} / 원문: ${text.slice(0, 300)}`);
     }
 
-    lastResult={parsed,name,birthDate,birthHour,gender,calType,mode:currentMode};
+    lastResult = { parsed, name, birthDate, birthHour, gender, calType, mode: currentMode };
 
-    let nextMsg = '운명의 배우자를 불러오는 중...';
-    if(currentMode === 'past') nextMsg = '전생의 모습을 소환하는 중...';
-    if(currentMode === 'face') nextMsg = '관상학적 특징을 그리는 중...';
-    setLoadingStep(nextMsg);
+    let imgUrl = null;
 
-    // 이미지 생성
-    const imageRes=await fetch('/api/image',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ 
-        prompt: parsed.imagePrompt, 
-        photo: (currentMode === 'past' || currentMode === 'face') ? uploadedPhoto : null,
-        mode: currentMode 
-      })
-    });
-    let imgUrl=null;
-    if(imageRes.ok){
-      const imgData=await imageRes.json();
-      if(imgData.imageData) imgUrl=`data:${imgData.mimeType};base64,${imgData.imageData}`;
+    if (currentMode === 'face') {
+      // 관상은 캐리커처 이미지를 그대로 사용
+      imgUrl = `data:${caricatureData.mimeType};base64,${caricatureData.imageData}`;
     } else {
-      const errText = await imageRes.text();
-      alert("이미지 생성 에러 상세내용: " + errText);
-      console.error("Image API Error:", errText);
+      let nextMsg = '운명의 배우자를 불러오는 중...';
+      if (currentMode === 'past') nextMsg = '전생의 모습을 소환하는 중...';
+      setLoadingStep(nextMsg);
+
+      // 이미지 생성
+      const imageRes = await fetch('/api/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: parsed.imagePrompt,
+          photo: (currentMode === 'past') ? uploadedPhoto : null,
+          mode: currentMode
+        })
+      });
+
+      if (imageRes.ok) {
+        const imgData = await imageRes.json();
+        if (imgData.imageData) imgUrl = `data:${imgData.mimeType};base64,${imgData.imageData}`;
+      } else {
+        const errText = await imageRes.text();
+        alert("이미지 생성 에러 상세내용: " + errText);
+        console.error("Image API Error:", errText);
+      }
     }
 
-    displayResult(parsed,imgUrl,currentMode);
+    displayResult(parsed, imgUrl, currentMode);
 
   }catch(err){
     showError(err.message||'오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
