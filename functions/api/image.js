@@ -22,19 +22,19 @@ export async function onRequestPost(context) {
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
         
-        const parts = [];
+        const reqParts = [];
         if (mode === 'past' && photo) {
-          parts.push({ inlineData: { mimeType: photo.mediaType, data: photo.base64 } });
-          parts.push({ text: prompt + ", the face should closely resemble the person in the reference photo" });
+          reqParts.push({ inlineData: { mimeType: photo.mediaType, data: photo.base64 } });
+          reqParts.push({ text: prompt + ", the face should closely resemble the person in the reference photo" });
         } else {
-          parts.push({ text: prompt });
+          reqParts.push({ text: prompt });
         }
 
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts }],
+            contents: [{ parts: reqParts }],
             generationConfig: { responseModalities: ['IMAGE'] },
           }),
         });
