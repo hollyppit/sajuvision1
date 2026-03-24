@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>운명의 거울 — 전생과 미래의 인연</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#c9963a; --gold-light:#e8c96a; --mist:#d4c9b8;
+  --deep:#0d0a05; --paper:#f5f0e8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--deep);color:var(--paper);font-family:'Gowun Batang',serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(139,26,26,.12) 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 80% 90%,rgba(201,150,58,.08) 0%,transparent 60%),radial-gradient(ellipse 100% 100% at 50% 50%,#0d0a05 0%,#050301 100%);pointer-events:none;z-index:0;}
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.stars span{position:absolute;background:var(--gold-light);border-radius:50%;animation:twinkle var(--d,3s) ease-in-out infinite;opacity:0;}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:var(--o,.6);transform:scale(1)}}
+.wrap{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:60px 24px 100px;}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+header{text-align:center;margin-bottom:48px;animation:fadeDown 1.2s ease both;}
+.title-deco{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;}
+.title-deco::before,.title-deco::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.title-deco span{font-size:22px;color:var(--gold);letter-spacing:4px;}
+h1{font-family:'Nanum Myeongjo',serif;font-size:clamp(30px,8vw,52px);font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--gold-light) 0%,var(--gold) 50%,#8b5e1a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;margin-bottom:12px;}
+.subtitle{color:var(--mist);font-size:15px;letter-spacing:3px;opacity:.7;}
+.mirror-deco{width:60px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:20px auto;}
+
+.mode-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid rgba(201,150,58,.25);border-radius:2px;overflow:hidden;margin-bottom:28px;}
+.mode-tab{padding:18px;text-align:center;cursor:pointer;font-family:'Nanum Myeongjo',serif;font-size:15px;letter-spacing:3px;color:rgba(201,150,58,.45);background:rgba(255,255,255,.02);transition:all .3s;border:none;outline:none;position:relative;}
+.mode-tab:first-child{border-right:1px solid rgba(201,150,58,.25);}
+.mode-tab.active{background:rgba(201,150,58,.1);color:var(--gold-light);}
+.mode-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold);}
+.mode-tab small{display:block;font-family:'Gowun Batang',serif;font-size:11px;letter-spacing:2px;opacity:.6;margin-top:4px;}
+
+.card{background:rgba(255,255,255,.03);border:1px solid rgba(201,150,58,.2);border-radius:2px;padding:36px;margin-bottom:24px;animation:fadeUp 1s ease both;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,150,58,.04) 0%,transparent 60%);pointer-events:none;}
+.card::after{content:'◇';position:absolute;top:12px;right:16px;color:var(--gold);opacity:.3;font-size:12px;}
+.section-title{font-family:'Nanum Myeongjo',serif;font-size:17px;color:var(--gold);letter-spacing:4px;margin-bottom:22px;display:flex;align-items:center;gap:12px;}
+.section-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(201,150,58,.4),transparent);}
+
+.photo-area{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.photo-drop{width:150px;height:190px;border:1px dashed rgba(201,150,58,.35);border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;background:rgba(201,150,58,.03);}
+.photo-drop:hover{border-color:rgba(201,150,58,.6);background:rgba(201,150,58,.06);}
+.photo-drop svg{color:var(--gold);opacity:.5;}
+.photo-drop p{font-size:11px;color:var(--mist);opacity:.55;text-align:center;letter-spacing:1px;line-height:1.9;}
+.photo-drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+#photoInput{display:none;}
+.photo-note{font-size:11px;color:var(--mist);opacity:.4;text-align:center;letter-spacing:1px;}
+.photo-skip{font-size:11px;color:rgba(201,150,58,.45);letter-spacing:2px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;transition:color .2s;}
+.photo-skip:hover{color:var(--gold);}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-group{display:flex;flex-direction:column;gap:8px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:11px;color:var(--gold);letter-spacing:3px;opacity:.8;}
+input,select{background:rgba(255,255,255,.04);border:1px solid rgba(201,150,58,.2);color:var(--paper);padding:11px 13px;font-family:'Gowun Batang',serif;font-size:14px;border-radius:1px;outline:none;transition:border-color .3s;width:100%;}
+input:focus,select:focus{border-color:rgba(201,150,58,.6);}
+input::placeholder{color:rgba(255,255,255,.2);}
+select option{background:#1a1008;}
+
+.btn-main{width:100%;padding:17px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Nanum Myeongjo',serif;font-size:17px;font-weight:700;letter-spacing:6px;cursor:pointer;transition:all .4s;position:relative;overflow:hidden;margin-top:10px;}
+.btn-main::before{content:'';position:absolute;inset:0;background:var(--gold);transform:translateX(-100%);transition:transform .4s;}
+.btn-main:hover::before{transform:translateX(0);}
+.btn-main:hover{color:#0d0a05;}
+.btn-main span{position:relative;z-index:1;}
+.btn-main:disabled{opacity:.4;cursor:not-allowed;}
+.btn-main:disabled::before{transform:translateX(-100%) !important;}
+.btn-main:disabled:hover{color:var(--gold);}
+
+.btn-pdf{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:rgba(139,26,26,.12);border:1px solid rgba(139,26,26,.35);color:#e8a0a0;font-family:'Nanum Myeongjo',serif;font-size:15px;letter-spacing:4px;cursor:pointer;transition:all .3s;margin-top:20px;}
+.btn-pdf:hover{background:rgba(139,26,26,.28);color:#ffc0c0;}
+
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(5,3,1,.92);z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:28px;}
+.loading-overlay.show{display:flex;}
+.loading-circle{width:72px;height:72px;border:1px solid rgba(201,150,58,.2);border-top-color:var(--gold);border-radius:50%;animation:spin 1.5s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'Nanum Myeongjo',serif;font-size:17px;color:var(--gold);letter-spacing:4px;animation:pulse 2s ease-in-out infinite;}
+.loading-sub{font-size:12px;color:var(--mist);opacity:.5;letter-spacing:3px;margin-top:-18px;}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+
+.error-msg{display:none;background:rgba(139,26,26,.15);border:1px solid rgba(139,26,26,.3);color:#e8a0a0;padding:14px 18px;font-size:13px;letter-spacing:1px;line-height:1.8;margin-top:14px;border-radius:2px;}
+.error-msg.show{display:block;}
+
+.result-divider{display:flex;align-items:center;justify-content:center;gap:20px;margin:44px 0;}
+.result-divider::before,.result-divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(201,150,58,.3),transparent);}
+.result-divider span{color:var(--gold);opacity:.5;font-size:20px;}
+
+.result-section{display:none;animation:fadeUp 1s ease both;}
+.result-section.show{display:block;}
+.result-card{background:rgba(255,255,255,.02);border:1px solid rgba(201,150,58,.15);padding:40px;margin-bottom:24px;}
+.result-card-title{font-family:'Nanum Myeongjo',serif;font-size:21px;color:var(--gold-light);letter-spacing:4px;margin-bottom:28px;text-align:center;}
+.result-card-title small{display:block;font-family:'Gowun Batang',serif;font-size:11px;color:var(--mist);opacity:.5;letter-spacing:3px;margin-top:5px;}
+
+.image-frame{position:relative;width:100%;max-width:400px;margin:0 auto 26px;}
+.image-frame::before,.image-frame::after{content:'';position:absolute;width:28px;height:28px;border-color:var(--gold);border-style:solid;opacity:.4;}
+.image-frame::before{top:-7px;left:-7px;border-width:1px 0 0 1px;}
+.image-frame::after{bottom:-7px;right:-7px;border-width:0 1px 1px 0;}
+.image-frame img{width:100%;display:block;filter:sepia(.08) contrast(1.04);}
+.image-placeholder{width:100%;aspect-ratio:3/4;background:rgba(201,150,58,.04);border:1px solid rgba(201,150,58,.1);display:flex;align-items:center;justify-content:center;color:rgba(201,150,58,.3);font-size:12px;letter-spacing:2px;text-align:center;line-height:2;}
+
+.result-meta{font-size:13px;color:var(--gold-light);letter-spacing:3px;margin-bottom:12px;}
+.result-desc{font-size:15px;line-height:2.3;color:rgba(245,240,232,.85);text-align:justify;word-break:keep-all;border-left:2px solid rgba(201,150,58,.3);padding-left:18px;margin-bottom:20px;}
+
+.fortune-comment{background:rgba(201,150,58,.05);border:1px solid rgba(201,150,58,.18);border-radius:2px;padding:20px 22px;margin-top:18px;position:relative;}
+.fortune-comment::before{content:'"';position:absolute;top:-14px;left:16px;font-family:'Nanum Myeongjo',serif;font-size:48px;color:var(--gold);opacity:.35;line-height:1;}
+.fortune-label{font-size:10px;color:var(--gold);letter-spacing:3px;opacity:.7;margin-bottom:10px;}
+.fortune-text{font-size:14px;line-height:2.2;color:rgba(245,240,232,.72);font-style:italic;word-break:keep-all;}
+
+.result-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.tag{padding:4px 13px;border:1px solid rgba(201,150,58,.3);font-size:11px;color:var(--gold);letter-spacing:2px;opacity:.8;}
+
+#printArea{display:none;}
+
+@media print {
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  body{background:#fff !important;color:#1a1008 !important;}
+  .wrap,.stars,.loading-overlay,header,.mode-tabs,.card,.btn-main,.btn-pdf,.error-msg,.result-section{display:none !important;}
+  #printArea{display:block !important;font-family:'Gowun Batang',serif;color:#1a1008;background:#fff;padding:0;margin:0;}
+  .pdf-page{width:210mm;min-height:297mm;padding:18mm 18mm 20mm;page-break-after:always;position:relative;background:#fff;}
+  .pdf-page:last-child{page-break-after:auto;}
+  .pdf-header{text-align:center;border-bottom:1.5px solid #c9963a;padding-bottom:14px;margin-bottom:20px;}
+  .pdf-title{font-family:'Nanum Myeongjo',serif;font-size:26pt;font-weight:800;color:#8b5e1a;}
+  .pdf-subtitle{font-size:9pt;letter-spacing:4px;color:#999;margin-top:4px;}
+  .pdf-section-title{font-family:'Nanum Myeongjo',serif;font-size:15pt;color:#8b5e1a;letter-spacing:3px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #e8dcc8;}
+  .pdf-meta{font-size:10pt;color:#7a6040;letter-spacing:2px;margin-bottom:12px;}
+  .pdf-img-wrap{text-align:center;margin:14px 0 18px;}
+  .pdf-img-wrap img{max-width:230px;max-height:300px;object-fit:contain;border:1px solid #e8dcc8;}
+  .pdf-img-placeholder{width:180px;height:240px;display:inline-flex;align-items:center;justify-content:center;background:#faf7f0;border:1px solid #e8dcc8;color:#ccc;font-size:10pt;text-align:center;line-height:1.8;}
+  .pdf-desc{font-size:11pt;line-height:2.1;text-align:justify;color:#2a2010;margin-bottom:12px;word-break:keep-all;}
+  .pdf-fortune{background:#fdf8ee;border-left:3px solid #c9963a;padding:12px 16px;margin:12px 0;}
+  .pdf-fortune-label{font-size:8pt;color:#c9963a;letter-spacing:3px;margin-bottom:6px;}
+  .pdf-fortune-text{font-size:10.5pt;line-height:2;color:#4a3820;font-style:italic;word-break:keep-all;}
+  .pdf-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+  .pdf-tag{padding:3px 10px;border:1px solid #c9963a;font-size:9pt;color:#8b5e1a;letter-spacing:1px;}
+  .pdf-info-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+  .pdf-info-table td{padding:6px 10px;font-size:10pt;border-bottom:1px solid #f0e8d8;color:#3a2a10;}
+  .pdf-info-table td:first-child{color:#8b5e1a;width:28%;letter-spacing:1px;}
+  .pdf-footer{position:absolute;bottom:12mm;left:18mm;right:18mm;text-align:center;font-size:8pt;color:#bbb;letter-spacing:2px;border-top:1px solid #e8dcc8;padding-top:8px;}
+}
+
+@media(max-width:540px){
+  .wrap{padding:36px 16px 72px;}
+  .card{padding:24px 18px;}
+  .form-grid{grid-template-columns:1fr;}
+  .form-group.full{grid-column:1;}
+  .result-card{padding:24px 18px;}
+}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--deep);}
+::-webkit-scrollbar-thumb{background:rgba(201,150,58,.3);}
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-circle"></div>
+  <div class="loading-text">운명의 실이 풀리고 있습니다</div>
+  <div class="loading-sub" id="loadingStep">사주를 분석하는 중...</div>
+</div>
+
+<div class="wrap">
+
+  <header>
+    <div class="title-deco"><span>☽</span><span>운명의 거울</span><span>☾</span></div>
+    <h1>전생과 미래의 인연</h1>
+    <div class="mirror-deco"></div>
+    <p class="subtitle">사주로 읽는 전생의 모습과 운명의 배우자</p>
+  </header>
+
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tab-past" onclick="setMode('past')">
+      前生의 모습<small>PAST LIFE</small>
+    </button>
+    <button class="mode-tab" id="tab-spouse" onclick="setMode('spouse')">
+      未來의 배우자<small>DESTINED PARTNER</small>
+    </button>
+  </div>
+
+  <div class="card" style="animation-delay:.1s;">
+    <div class="section-title">✦ 사진 등록 <span style="font-size:11px;color:rgba(201,150,58,.45);letter-spacing:2px;font-family:'Gowun Batang',serif;font-weight:400;">(선택사항)</span></div>
+    <div class="photo-area">
+      <div class="photo-drop" id="photoDrop" onclick="document.getElementById('photoInput').click()">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+          <rect x="3" y="3" width="18" height="18" rx="1"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="m21 15-5-5L5 21"/>
+        </svg>
+        <p>클릭하여<br>사진 업로드</p>
+      </div>
+      <input type="file" id="photoInput" accept="image/*">
+      <p class="photo-note">사진이 있으면 외모 특징을 분석에 반영합니다</p>
+      <span class="photo-skip" id="photoSkipBtn" onclick="clearPhoto()">✕ 사진 없이 진행하기</span>
+    </div>
+  </div>
+
+  <div class="card" style="animation-delay:.2s;">
+    <div class="section-title">✦ 사주 정보</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>이름</label>
+        <input type="text" id="name" placeholder="홍길동">
+      </div>
+      <div class="form-group">
+        <label>생년월일</label>
+        <input type="date" id="birthDate">
+      </div>
+      <div class="form-group">
+        <label>태어난 시간</label>
+        <select id="birthHour">
+          <option value="시간 미상">모름</option>
+          <option value="자시(子時) 23~01시">자시(子時) 23~01시</option>
+          <option value="축시(丑時) 01~03시">축시(丑時) 01~03시</option>
+          <option value="인시(寅時) 03~05시">인시(寅時) 03~05시</option>
+          <option value="묘시(卯時) 05~07시">묘시(卯時) 05~07시</option>
+          <option value="진시(辰時) 07~09시">진시(辰時) 07~09시</option>
+          <option value="사시(巳時) 09~11시">사시(巳時) 09~11시</option>
+          <option value="오시(午時) 11~13시">오시(午時) 11~13시</option>
+          <option value="미시(未時) 13~15시">미시(未時) 13~15시</option>
+          <option value="신시(申時) 15~17시">신시(申時) 15~17시</option>
+          <option value="유시(酉時) 17~19시">유시(酉時) 17~19시</option>
+          <option value="술시(戌時) 19~21시">술시(戌時) 19~21시</option>
+          <option value="해시(亥時) 21~23시">해시(亥時) 21~23시</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>성별</label>
+        <select id="gender">
+          <option value="남성">남성</option>
+          <option value="여성">여성</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>태양력 / 음력</label>
+        <select id="calType">
+          <option value="양력">양력</option>
+          <option value="음력">음력</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-main" id="revealBtn" onclick="startReveal()">
+      <span id="btnLabel">전생의 문을 열다</span>
+    </button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="result-section" id="resultSection">
+    <div class="result-divider"><span>✦</span></div>
+
+    <div class="result-card" id="pastLifeCard" style="display:none;">
+      <div class="result-card-title">前生의 모습<small>PAST LIFE VISION</small></div>
+      <div class="image-frame">
+        <div class="image-placeholder" id="pastLifeImgPh">전생의 기억을 불러오는 중...</div>
+        <img id="pastLifeImg" style="display:none;" alt="전생의 모습">
+      </div>
+      <div class="result-meta" id="pastLifeMeta"></div>
+      <div class="result-desc" id="pastLifeDesc"></div>
+      <div class="fortune-comment">
+        <div class="fortune-label">✦ 점술가의 말</div>
+        <div class="fortune-text" id="pastLifeFortune"></div>
+      </div>
+      <div class="result-tags" id="pastLifeTags"></div>
+    </div>
+
+    <div class="result-card" id="spouseCard" style="display:none;">
+      <div class="result-card-title">未來의 배우자<small>DESTINED PARTNER</small></div>
+      <div class="image-frame">
+        <div class="image-placeholder" id="spouseImgPh">운명의 인연을 불러오는 중...</div>
+        <img id="spouseImg" style="display:none;" alt="미래의 배우자">
+      </div>
+      <div class="result-meta" id="spouseMeta"></div>
+      <div class="result-desc" id="spouseDesc"></div>
+      <div class="fortune-comment">
+        <div class="fortune-label">✦ 점술가의 말</div>
+        <div class="fortune-text" id="spouseFortune"></div>
+      </div>
+      <div class="result-tags" id="spouseTags"></div>
+    </div>
+
+    <button class="btn-pdf" onclick="exportPDF()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 18 15 15"/>
+      </svg>
+      <span>A4 PDF로 내보내기</span>
+    </button>
+  </div>
+
+</div>
+
+<div id="printArea"></div>
+
+<script>
+let uploadedPhoto = null;
+let currentMode   = 'past';
+let lastResult    = null;
+
+// 별
+(function(){
+  const c = document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('span');
+    const sz=Math.random()*2+.5;
+    s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--o:${.3+Math.random()*.5};animation-delay:${Math.random()*4}s;`;
+    c.appendChild(s);
+  }
+})();
+
+function setMode(mode){
+  currentMode=mode;
+  document.getElementById('tab-past').classList.toggle('active',mode==='past');
+  document.getElementById('tab-spouse').classList.toggle('active',mode==='spouse');
+  document.getElementById('btnLabel').textContent=mode==='past'?'전생의 문을 열다':'인연의 문을 열다';
+}
+
+document.getElementById('photoInput').addEventListener('change',function(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    uploadedPhoto={dataUrl:ev.target.result,base64:ev.target.result.split(',')[1],mediaType:file.type};
+    document.getElementById('photoDrop').innerHTML=`<img src="${ev.target.result}" alt="업로드 사진">`;
+    document.getElementById('photoSkipBtn').textContent='✕ 사진 제거';
+  };
+  reader.readAsDataURL(file);
+});
+
+function clearPhoto(){
+  uploadedPhoto=null;
+  document.getElementById('photoInput').value='';
+  document.getElementById('photoDrop').innerHTML=`
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+      <rect x="3" y="3" width="18" height="18" rx="1"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <path d="m21 15-5-5L5 21"/>
+    </svg>
+    <p>클릭하여<br>사진 업로드</p>`;
+  document.getElementById('photoSkipBtn').textContent='✕ 사진 없이 진행하기';
+}
+
+function setLoadingStep(t){document.getElementById('loadingStep').textContent=t;}
+
+async function startReveal(){
+  const name=document.getElementById('name').value.trim();
+  const birthDate=document.getElementById('birthDate').value;
+  const birthHour=document.getElementById('birthHour').value;
+  const gender=document.getElementById('gender').value;
+  const calType=document.getElementById('calType').value;
+  const errorEl=document.getElementById('errorMsg');
+  errorEl.classList.remove('show');
+
+  if(!name)return showError('이름을 입력해주세요.');
+  if(!birthDate)return showError('생년월일을 입력해주세요.');
+
+  const btn=document.getElementById('revealBtn');
+  btn.disabled=true;
+  document.getElementById('loadingOverlay').classList.add('show');
+  document.getElementById('resultSection').classList.remove('show');
+
+  try {
+    setLoadingStep('사주의 기운을 읽는 중...');
+    const prompt=buildPrompt(name,birthDate,birthHour,gender,calType,currentMode);
+
+    // Cloudflare Function 호출
+    const analyzeRes=await fetch('/api/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt,photo:uploadedPhoto})
+    });
+    if(!analyzeRes.ok){
+      const e=await analyzeRes.json().catch(()=>({}));
+      throw new Error(e.error||`분석 서버 오류: ${analyzeRes.status}`);
+    }
+    const {text}=await analyzeRes.json();
+
+    let parsed;
+    try{parsed=JSON.parse(text.match(/\{[\s\S]*\}/)[0]);}
+    catch{throw new Error('분석 결과 해석 실패. 다시 시도해주세요.');}
+
+    lastResult={parsed,name,birthDate,birthHour,gender,calType,mode:currentMode};
+
+    setLoadingStep(currentMode==='past'?'전생의 모습을 소환하는 중...':'운명의 배우자를 불러오는 중...');
+
+    // 이미지 생성
+    const imageRes=await fetch('/api/image',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({prompt:parsed.imagePrompt})
+    });
+    let imgUrl=null;
+    if(imageRes.ok){
+      const imgData=await imageRes.json();
+      if(imgData.imageData) imgUrl=`data:${imgData.mimeType};base64,${imgData.imageData}`;
+    }
+
+    displayResult(parsed,imgUrl,currentMode);
+
+  }catch(err){
+    showError(err.message||'오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    console.error(err);
+  }finally{
+    btn.disabled=false;
+    document.getElementById('loadingOverlay').classList.remove('show');
+  }
+}
+
+function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
+  const photoNote=uploadedPhoto?'첨부된 사진을 참고하여 인물의 외모적 특징을 분석에 반영하세요.':'사진 없이 사주 정보만으로 분석하세요.';
+  const isPast=mode==='past';
+  const jsonTemplate=isPast
+    ?`{"era":"","role":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`
+    :`{"firstMeeting":"","appearance":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+
+  const modeInstruction=isPast?`
+분석: 이 사람의 전생
+- era: 전생의 시대 (예: 조선 중기, 고려 말 등)
+- role: 전생의 신분/직업
+- description: 전생 삶에 대한 시적이고 신비로운 서술 200자 내외.
+- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 150자 내외.
+- keywords: 전생을 상징하는 키워드 4개
+- imagePrompt: 영문 이미지 프롬프트. "${gender==='남성'?'Male':'Female'} figure in [era] Korean historical setting, [role], dramatic lighting, ink wash painting style, mysterious atmosphere, 8k"`:`
+분석: 이 사람의 미래 배우자
+- firstMeeting: 처음 만나는 상황과 장소
+- appearance: 배우자 외모 묘사
+- personality: 배우자 성격 특징
+- description: 미래 배우자에 대한 신비롭고 낭만적인 서술 200자 내외.
+- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 150자 내외.
+- keywords: 이 인연을 상징하는 키워드 4개
+- imagePrompt: 영문 이미지 프롬프트. "Portrait of a ${gender==='남성'?'beautiful Korean woman':'handsome Korean man'}, [appearance], soft warm lighting, photorealistic, romantic atmosphere, 8k"`;
+
+  return `당신은 한국의 사주명리학 전문가이자 신비로운 점술가입니다.
+${photoNote}
+
+[사주 정보]
+- 이름: ${name}
+- 생년월일: ${birthDate} (${calType})
+- 태어난 시: ${birthHour}
+- 성별: ${gender}
+${modeInstruction}
+
+반드시 JSON만 출력하세요. 마크다운 없이:
+${jsonTemplate}`;
+}
+
+function displayResult(data,imgUrl,mode){
+  document.getElementById('pastLifeCard').style.display='none';
+  document.getElementById('spouseCard').style.display='none';
+  if(mode==='past'){
+    document.getElementById('pastLifeCard').style.display='block';
+    document.getElementById('pastLifeMeta').textContent=`${data.era} · ${data.role}`;
+    document.getElementById('pastLifeDesc').textContent=data.description;
+    document.getElementById('pastLifeFortune').textContent=data.fortuneTellerComment;
+    renderTags('pastLifeTags',data.keywords);
+    renderImg('pastLifeImg','pastLifeImgPh',imgUrl);
+  }else{
+    document.getElementById('spouseCard').style.display='block';
+    document.getElementById('spouseMeta').textContent=`첫 만남 · ${data.firstMeeting}`;
+    document.getElementById('spouseDesc').textContent=data.description;
+    document.getElementById('spouseFortune').textContent=data.fortuneTellerComment;
+    renderTags('spouseTags',data.keywords);
+    renderImg('spouseImg','spouseImgPh',imgUrl);
+  }
+  document.getElementById('resultSection').classList.add('show');
+  setTimeout(()=>document.getElementById('resultSection').scrollIntoView({behavior:'smooth',block:'start'}),300);
+}
+
+function renderImg(imgId,phId,url){
+  const img=document.getElementById(imgId),ph=document.getElementById(phId);
+  if(url){img.src=url;img.style.display='block';ph.style.display='none';}
+  else{ph.textContent='이미지를 불러올 수 없습니다';}
+}
+function renderTags(elId,keywords){
+  if(!keywords?.length)return;
+  document.getElementById(elId).innerHTML=keywords.map(k=>`<span class="tag">${k}</span>`).join('');
+}
+
+function exportPDF(){
+  if(!lastResult)return;
+  const{parsed,name,birthDate,birthHour,gender,calType,mode}=lastResult;
+  const today=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+  const imgEl=document.getElementById(mode==='past'?'pastLifeImg':'spouseImg');
+  const imgShown=imgEl.style.display!=='none'&&imgEl.src;
+  const imgHtml=imgShown?`<img src="${imgEl.src}" alt="결과 이미지">`:`<div class="pdf-img-placeholder">이미지를 불러올 수 없습니다</div>`;
+  const tagsHtml=(parsed.keywords||[]).map(k=>`<span class="pdf-tag">${k}</span>`).join('');
+
+  let bodyHtml='';
+  if(mode==='past'){
+    bodyHtml=`
+      <div class="pdf-section-title">前生의 모습 · PAST LIFE</div>
+      <div class="pdf-meta">${parsed.era} · ${parsed.role}</div>
+      <div class="pdf-img-wrap">${imgHtml}</div>
+      <div class="pdf-desc">${parsed.description}</div>
+      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${parsed.fortuneTellerComment}</div></div>
+      <div class="pdf-tags">${tagsHtml}</div>`;
+  }else{
+    bodyHtml=`
+      <div class="pdf-section-title">未來의 배우자 · DESTINED PARTNER</div>
+      <div class="pdf-meta">첫 만남 · ${parsed.firstMeeting}</div>
+      <div class="pdf-img-wrap">${imgHtml}</div>
+      <div class="pdf-desc">${parsed.description}</div>
+      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${parsed.fortuneTellerComment}</div></div>
+      <div class="pdf-tags">${tagsHtml}</div>`;
+  }
+
+  document.getElementById('printArea').innerHTML=`
+    <div class="pdf-page">
+      <div class="pdf-header"><div class="pdf-title">운명의 거울</div><div class="pdf-subtitle">사주로 읽는 전생과 미래의 인연</div></div>
+      <table class="pdf-info-table">
+        <tr><td>이름</td><td>${name}</td></tr>
+        <tr><td>생년월일</td><td>${birthDate} (${calType})</td></tr>
+        <tr><td>태어난 시</td><td>${birthHour}</td></tr>
+        <tr><td>성별</td><td>${gender}</td></tr>
+        <tr><td>분석일</td><td>${today}</td></tr>
+      </table>
+      ${bodyHtml}
+      <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today}</div>
+    </div>`;
+  window.print();
+}
+
+function showError(msg){const el=document.getElementById('errorMsg');el.textContent='⚠ '+msg;el.classList.add('show');}
+</script>
+</body>
+</html>
