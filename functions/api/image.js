@@ -11,9 +11,9 @@ export async function onRequestPost(context) {
     const GEMINI_KEY = context.env.GEMINI_KEY;
 
     const models = [
-      'gemini-2.0-flash-preview-image-generation',
-      'gemini-2.5-flash-preview-image-generation',
-      'gemini-2.0-flash-exp'
+      'gemini-2.5-flash-image',
+      'gemini-3.1-flash-image-preview',
+      'gemini-3-pro-image-preview'
     ];
 
     let lastError = '';
