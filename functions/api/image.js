@@ -7,7 +7,7 @@ export async function onRequestPost(context) {
   };
 
   try {
-    const { prompt } = await context.request.json();
+    const { prompt, photo, mode } = await context.request.json();
     const GEMINI_KEY = context.env.GEMINI_KEY;
 
     const models = [
@@ -22,11 +22,19 @@ export async function onRequestPost(context) {
       try {
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
         
+        const parts = [];
+        if (mode === 'past' && photo) {
+          parts.push({ inlineData: { mimeType: photo.mediaType, data: photo.base64 } });
+          parts.push({ text: prompt + ", the face should closely resemble the person in the reference photo" });
+        } else {
+          parts.push({ text: prompt });
+        }
+
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{ parts }],
             generationConfig: { responseModalities: ['IMAGE'] },
           }),
         });

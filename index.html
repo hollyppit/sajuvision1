@@ -391,7 +391,11 @@ async function startReveal(){
     const imageRes=await fetch('/api/image',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({prompt:parsed.imagePrompt})
+      body:JSON.stringify({ 
+        prompt: parsed.imagePrompt, 
+        photo: currentMode === 'past' ? uploadedPhoto : null,
+        mode: currentMode 
+      })
     });
     let imgUrl=null;
     if(imageRes.ok){
