@@ -397,6 +397,10 @@ async function startReveal(){
     if(imageRes.ok){
       const imgData=await imageRes.json();
       if(imgData.imageData) imgUrl=`data:${imgData.mimeType};base64,${imgData.imageData}`;
+    } else {
+      const errText = await imageRes.text();
+      alert("이미지 생성 에러 상세내용: " + errText);
+      console.error("Image API Error:", errText);
     }
 
     displayResult(parsed,imgUrl,currentMode);

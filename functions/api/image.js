@@ -22,8 +22,8 @@ export async function onRequestPost(context) {
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(`Gemini 오류: ${err.error?.message || res.status}`);
+      const errTxt = await res.text().catch(() => "");
+      throw new Error(`Gemini 상세 오류[${res.status}]: ${errTxt}`);
     }
 
     const data = await res.json();
