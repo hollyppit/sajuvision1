@@ -27,7 +27,7 @@ export async function onRequestPost(context) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+            generationConfig: { responseModalities: ['IMAGE'] },
           }),
         });
 
@@ -57,7 +57,16 @@ export async function onRequestPost(context) {
       }
     }
 
-    throw new Error(`모든 Gemini 모델 실패:\n${lastError}`);
+    let availableModels = '';
+    try {
+      const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_KEY}`);
+      if (listRes.ok) {
+        const listData = await listRes.json();
+        availableModels = listData.models.map(m => m.name.split('/')[1]).filter(n => n.includes('image') || n.includes('flash')).join(', ');
+      }
+    } catch(e) {}
+
+    throw new Error(`모든 Gemini 모델 실패:\n${lastError}\n\n[참고] 이 API 키로 사용 가능한 관련 모델들: ${availableModels}`);
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
