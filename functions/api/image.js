@@ -10,14 +10,14 @@ export async function onRequestPost(context) {
     const { prompt } = await context.request.json();
     const GEMINI_KEY = context.env.GEMINI_KEY;
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_KEY}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GEMINI_KEY}`;
 
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+        generationConfig: { responseModalities: ['IMAGE'] },
       }),
     });
 
