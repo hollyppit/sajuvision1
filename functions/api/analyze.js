@@ -52,7 +52,10 @@ async function callOpenAI(apiKey, prompt, photo) {
     body: JSON.stringify({
       model: 'gpt-4o',
       max_tokens: 2000,
-      messages: [{ role: 'user', content: userContent }],
+      messages: [
+        { role: 'system', content: "You must respond with valid JSON only. No markdown, no code blocks, no explanation. Just the raw JSON object." },
+        { role: 'user', content: userContent }
+      ],
     }),
   });
 

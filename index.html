@@ -412,8 +412,15 @@ async function startReveal(){
     const {text}=await analyzeRes.json();
 
     let parsed;
-    try{parsed=JSON.parse(text.match(/\{[\s\S]*\}/)[0]);}
-    catch{throw new Error('분석 결과 해석 실패. 다시 시도해주세요.');}
+    try {
+      // 마지막 } 까지 포함하도록 가장 바깥 JSON 추출
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('JSON 없음');
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      // 파싱 실패 시 응답 원문을 에러에 포함해서 디버깅 가능하게
+      throw new Error(`분석 결과 해석 실패: ${e.message} / 원문: ${text.slice(0, 300)}`);
+    }
 
     lastResult={parsed,name,birthDate,birthHour,gender,calType,mode:currentMode};
 
