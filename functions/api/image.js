@@ -20,7 +20,7 @@ export async function onRequestPost(context) {
 
     for (const model of models) {
       try {
-        const endpoint = `https://generativelanguage.googleapis.com/v1alpha/models/${model}:generateContent?key=${GEMINI_KEY}`;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_KEY}`;
         
         const res = await fetch(endpoint, {
           method: 'POST',
