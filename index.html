@@ -22,6 +22,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 @keyframes fadeUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
 
 header{text-align:center;margin-bottom:48px;animation:fadeDown 1.2s ease both;}
+.main-logo{max-width:180px;height:auto;margin:0 auto 24px;display:block;}
 .title-deco{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;}
 .title-deco::before,.title-deco::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
 .title-deco span{font-size:22px;color:var(--gold);letter-spacing:4px;}
@@ -167,6 +168,7 @@ select option{background:#1a1008;}
 <div class="wrap">
 
   <header>
+    <img src="로고.png" alt="운명의 거울 로고" class="main-logo">
     <div class="title-deco"><span>☽</span><span>운명의 거울</span><span>☾</span></div>
     <h1>전생과 미래의 인연</h1>
     <div class="mirror-deco"></div>
