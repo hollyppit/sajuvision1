@@ -114,6 +114,12 @@ select option{background:#1a1008;}
 .result-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
 .tag{padding:4px 13px;border:1px solid rgba(201,150,58,.3);font-size:11px;color:var(--gold);letter-spacing:2px;opacity:.8;}
 
+.info-blocks{display:grid;gap:14px;margin-bottom:24px;}
+.info-block{background:rgba(255,255,255,.015);border:1px solid rgba(201,150,58,.1);padding:18px;border-radius:2px;}
+.info-block-title{font-family:'Nanum Myeongjo',serif;font-size:14px;color:var(--gold-light);letter-spacing:2px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.info-block-title i{font-style:normal;opacity:0.7;font-size:12px;color:var(--gold);}
+.info-block-text{font-size:13.5px;line-height:1.9;color:rgba(245,240,232,.82);word-break:keep-all;}
+
 #printArea{display:none;}
 
 @media print {
@@ -128,13 +134,17 @@ select option{background:#1a1008;}
   .pdf-subtitle{font-size:9pt;letter-spacing:4px;color:#999;margin-top:4px;}
   .pdf-section-title{font-family:'Nanum Myeongjo',serif;font-size:15pt;color:#8b5e1a;letter-spacing:3px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #e8dcc8;}
   .pdf-meta{font-size:10pt;color:#7a6040;letter-spacing:2px;margin-bottom:12px;}
-  .pdf-img-wrap{text-align:center;margin:14px 0 18px;}
-  .pdf-img-wrap img{max-width:230px;max-height:300px;object-fit:contain;border:1px solid #e8dcc8;}
+  .pdf-img-wrap{text-align:center;margin:10px 0 14px;}
+  .pdf-img-wrap img{max-width:230px;max-height:200px;object-fit:contain;border:1px solid #e8dcc8;}
   .pdf-img-placeholder{width:180px;height:240px;display:inline-flex;align-items:center;justify-content:center;background:#faf7f0;border:1px solid #e8dcc8;color:#ccc;font-size:10pt;text-align:center;line-height:1.8;}
-  .pdf-desc{font-size:11pt;line-height:2.1;text-align:justify;color:#2a2010;margin-bottom:12px;word-break:keep-all;}
+  .pdf-desc{font-size:10pt;line-height:1.8;text-align:justify;color:#2a2010;margin-bottom:12px;word-break:keep-all;}
+  .pdf-info-blocks {margin-bottom:12px;}
+  .pdf-info-block {margin-bottom:6px;}
+  .pdf-info-title {font-family:'Nanum Myeongjo',serif;font-size:10pt;color:#8b5e1a;font-weight:700;}
+  .pdf-info-text {font-size:10pt;line-height:1.8;color:#3a2a10;}
   .pdf-fortune{background:#fdf8ee;border-left:3px solid #c9963a;padding:12px 16px;margin:12px 0;}
   .pdf-fortune-label{font-size:8pt;color:#c9963a;letter-spacing:3px;margin-bottom:6px;}
-  .pdf-fortune-text{font-size:10.5pt;line-height:2;color:#4a3820;font-style:italic;word-break:keep-all;}
+  .pdf-fortune-text{font-size:10pt;line-height:1.8;color:#4a3820;font-style:italic;word-break:keep-all;}
   .pdf-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
   .pdf-tag{padding:3px 10px;border:1px solid #c9963a;font-size:9pt;color:#8b5e1a;letter-spacing:1px;}
   .pdf-info-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
@@ -177,13 +187,13 @@ select option{background:#1a1008;}
 
   <div class="mode-tabs">
     <button class="mode-tab active" id="tab-past" onclick="setMode('past')">
-      前生의 모습<small>PAST LIFE</small>
+      전생 모습 보기<small>PAST LIFE</small>
     </button>
     <button class="mode-tab" id="tab-spouse" onclick="setMode('spouse')">
-      未來의 배우자<small>DESTINED PARTNER</small>
+      미래 배우자<small>DESTINED PARTNER</small>
     </button>
     <button class="mode-tab" id="tab-face" onclick="setMode('face')">
-      觀相 보기<small>FACE READING</small>
+      관상 보기<small>FACE READING</small>
     </button>
   </div>
 
@@ -258,13 +268,14 @@ select option{background:#1a1008;}
     <div class="result-divider"><span>✦</span></div>
 
     <div class="result-card" id="pastLifeCard" style="display:none;">
-      <div class="result-card-title">前生의 모습<small>PAST LIFE VISION</small></div>
+      <div class="result-card-title">전생 모습 보기<small>PAST LIFE VISION</small></div>
       <div class="image-frame">
         <div class="image-placeholder" id="pastLifeImgPh">전생의 기억을 불러오는 중...</div>
         <img id="pastLifeImg" style="display:none;" alt="전생의 모습">
       </div>
       <div class="result-meta" id="pastLifeMeta"></div>
       <div class="result-desc" id="pastLifeDesc"></div>
+      <div id="pastLifeBlocks"></div>
       <div class="fortune-comment">
         <div class="fortune-label">✦ 점술가의 말</div>
         <div class="fortune-text" id="pastLifeFortune"></div>
@@ -273,13 +284,14 @@ select option{background:#1a1008;}
     </div>
 
     <div class="result-card" id="spouseCard" style="display:none;">
-      <div class="result-card-title">未來의 배우자<small>DESTINED PARTNER</small></div>
+      <div class="result-card-title">미래 배우자<small>DESTINED PARTNER</small></div>
       <div class="image-frame">
         <div class="image-placeholder" id="spouseImgPh">운명의 인연을 불러오는 중...</div>
         <img id="spouseImg" style="display:none;" alt="미래의 배우자">
       </div>
       <div class="result-meta" id="spouseMeta"></div>
       <div class="result-desc" id="spouseDesc"></div>
+      <div id="spouseBlocks"></div>
       <div class="fortune-comment">
         <div class="fortune-label">✦ 점술가의 말</div>
         <div class="fortune-text" id="spouseFortune"></div>
@@ -288,13 +300,14 @@ select option{background:#1a1008;}
     </div>
 
     <div class="result-card" id="faceCard" style="display:none;">
-      <div class="result-card-title">觀相 풀이<small>FACE READING</small></div>
+      <div class="result-card-title">관상 보기<small>FACE READING</small></div>
       <div class="image-frame">
         <div class="image-placeholder" id="faceImgPh">관상을 읽는 중...</div>
         <img id="faceImg" style="display:none;" alt="관상 이미지">
       </div>
       <div class="result-meta" id="faceMeta"></div>
       <div class="result-desc" id="faceDesc"></div>
+      <div id="faceBlocks"></div>
       <div class="fortune-comment">
         <div class="fortune-label">✦ 점술가의 말</div>
         <div class="fortune-text" id="faceFortune"></div>
@@ -499,17 +512,21 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
   let jsonTemplate, modeInstruction;
 
   if (mode === 'past') {
-    jsonTemplate = `{"era":"","role":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate = `{"era":"","role":"","lifeStory":"","relationships":"","death":"","karma":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
 분석: 이 사람의 전생
 - era: 전생의 시대 (예: 조선 중기, 고려 말 등)
 - role: 전생의 신분/직업
+- lifeStory: 어린 시절부터 중년까지 인생 흐름 서술 150자
+- relationships: 전생의 핵심 인연(은인/원수/사랑 등) 100자
+- death: 어떤 죽음을 맞았는지, 마지막 감정 80자
+- karma: 전생에서 현생으로 이어진 업보 80자
 - description: 전생 삶에 대한 시적이고 신비로운 서술 200자 내외.
 - fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 150자 내외.
 - keywords: 전생을 상징하는 키워드 4개
 - imagePrompt: 영문 이미지 프롬프트. "${gender==='남성'?'Male':'Female'} figure in [era] Korean historical setting, [role], dramatic lighting, ink wash painting style, mysterious atmosphere, 8k"`;
   } else if (mode === 'face') {
-    jsonTemplate = `{"category":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate = `{"category":"","faceType":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
 [사주 참고 정보]
 - 이름: ${name}
@@ -518,16 +535,26 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 
 분석 항목:
 - category: 관상 유형 (예: 목형(木形) · 귀인상)
+- faceType: 이목구비 특징 한 줄 요약
+- lifeFlow: 청년기/중년기/말년기 인생 흐름 150자
+- personality: 성격 강점과 약점 100자
+- wealth: 재물운·직업운 80자
+- love: 연애·결혼운 80자
+- caution: 주의할 점 80자
 - description: 이 캐릭터의 관상에 대한 신비롭고 시적인 서술 200자 내외. 이목구비별 특징, 성격, 운세 흐름 포함.
 - fortuneTellerComment: 점술가가 직접("당신의 얼굴에는...") 말하듯 핵심 관상 조언 150자 내외.
 - keywords: 이 관상을 상징하는 키워드 4개
 - imagePrompt: 이 캐릭터의 관상적 특징을 극적으로 표현한 영문 초상화 프롬프트. face reading portrait, [특징], dramatic lighting, traditional Korean fortune teller aesthetic, mystical atmosphere, 8k`;
   } else {
-    jsonTemplate = `{"firstMeeting":"","appearance":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate = `{"firstMeeting":"","appearance":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
 분석: 이 사람의 미래 배우자
 - firstMeeting: 처음 만나는 상황과 장소
 - appearance: 배우자 외모 묘사
+- celebrity: 닮은 한국 연예인 1~2명
+- animalFace: 동물 관상 (예: 여우상) + 한 문장 이유
+- job: 추측 직업군 2~3가지 + 이유
+- signs: 만나기 전 나타나는 징조 2~3가지
 - personality: 배우자 성격 특징
 - description: 미래 배우자에 대한 신비롭고 낭만적인 서술 200자 내외.
 - fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 150자 내외.
@@ -558,6 +585,14 @@ function displayResult(data,imgUrl,mode){
     document.getElementById('pastLifeCard').style.display='block';
     document.getElementById('pastLifeMeta').textContent=`${data.era} · ${data.role}`;
     document.getElementById('pastLifeDesc').textContent=data.description;
+    document.getElementById('pastLifeBlocks').innerHTML=`
+      <div class="info-blocks">
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 흐르던 생의 기록</div><div class="info-block-text">${data.lifeStory||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 얽매인 전생의 인연</div><div class="info-block-text">${data.relationships||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 생의 마감과 마지막 감정</div><div class="info-block-text">${data.death||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 현생으로 이어진 업보</div><div class="info-block-text">${data.karma||''}</div></div>
+      </div>
+    `;
     document.getElementById('pastLifeFortune').textContent=data.fortuneTellerComment;
     renderTags('pastLifeTags',data.keywords);
     renderImg('pastLifeImg','pastLifeImgPh',imgUrl);
@@ -565,6 +600,16 @@ function displayResult(data,imgUrl,mode){
     document.getElementById('faceCard').style.display='block';
     document.getElementById('faceMeta').textContent=data.category;
     document.getElementById('faceDesc').textContent=data.description;
+    document.getElementById('faceBlocks').innerHTML=`
+      <div class="info-blocks">
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 이목구비 특징</div><div class="info-block-text">${data.faceType||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 인생의 큰 흐름</div><div class="info-block-text">${data.lifeFlow||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 내면의 성향 (강점과 약점)</div><div class="info-block-text">${data.personality||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 재물 및 직업운</div><div class="info-block-text">${data.wealth||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 애정 및 결혼운</div><div class="info-block-text">${data.love||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 삶의 주의점</div><div class="info-block-text">${data.caution||''}</div></div>
+      </div>
+    `;
     document.getElementById('faceFortune').textContent=data.fortuneTellerComment;
     renderTags('faceTags',data.keywords);
     renderImg('faceImg','faceImgPh',imgUrl);
@@ -572,6 +617,14 @@ function displayResult(data,imgUrl,mode){
     document.getElementById('spouseCard').style.display='block';
     document.getElementById('spouseMeta').textContent=`첫 만남 · ${data.firstMeeting}`;
     document.getElementById('spouseDesc').textContent=data.description;
+    document.getElementById('spouseBlocks').innerHTML=`
+      <div class="info-blocks">
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 닮은꼴 연예인</div><div class="info-block-text">${data.celebrity||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 동물 관상</div><div class="info-block-text">${data.animalFace||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 예상 직업군</div><div class="info-block-text">${data.job||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 만나기 전의 징조</div><div class="info-block-text">${data.signs||''}</div></div>
+      </div>
+    `;
     document.getElementById('spouseFortune').textContent=data.fortuneTellerComment;
     renderTags('spouseTags',data.keywords);
     renderImg('spouseImg','spouseImgPh',imgUrl);
@@ -599,30 +652,52 @@ function exportPDF(){
   const imgHtml=imgShown?`<img src="${imgEl.src}" alt="결과 이미지">`:`<div class="pdf-img-placeholder">이미지를 불러올 수 없습니다</div>`;
   const tagsHtml=(parsed.keywords||[]).map(k=>`<span class="pdf-tag">${k}</span>`).join('');
 
+  const tr = (t) => { if(!t)return ''; return t.length>60 ? t.slice(0,60)+'...' : t; };
+
   let bodyHtml='';
   if(mode==='past'){
     bodyHtml=`
-      <div class="pdf-section-title">前生의 모습 · PAST LIFE</div>
+      <div class="pdf-section-title">전생 모습 보기 · PAST LIFE</div>
       <div class="pdf-meta">${parsed.era} · ${parsed.role}</div>
       <div class="pdf-img-wrap">${imgHtml}</div>
-      <div class="pdf-desc">${parsed.description}</div>
-      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${parsed.fortuneTellerComment}</div></div>
+      <div class="pdf-desc">${tr(parsed.description)}</div>
+      <div class="pdf-info-blocks">
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 흐르던 생의 기록: </span><span class="pdf-info-text">${tr(parsed.lifeStory)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 얽매인 전생의 인연: </span><span class="pdf-info-text">${tr(parsed.relationships)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 생의 마감: </span><span class="pdf-info-text">${tr(parsed.death)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 현생으로 이어진 업보: </span><span class="pdf-info-text">${tr(parsed.karma)}</span></div>
+      </div>
+      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${tr(parsed.fortuneTellerComment)}</div></div>
       <div class="pdf-tags">${tagsHtml}</div>`;
   } else if(mode==='face'){
     bodyHtml=`
-      <div class="pdf-section-title">觀相 풀이 · FACE READING</div>
+      <div class="pdf-section-title">관상 보기 · FACE READING</div>
       <div class="pdf-meta">${parsed.category}</div>
       <div class="pdf-img-wrap">${imgHtml}</div>
-      <div class="pdf-desc">${parsed.description}</div>
-      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${parsed.fortuneTellerComment}</div></div>
+      <div class="pdf-desc">${tr(parsed.description)}</div>
+      <div class="pdf-info-blocks">
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 이목구비 특징: </span><span class="pdf-info-text">${tr(parsed.faceType)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 인생의 큰 흐름: </span><span class="pdf-info-text">${tr(parsed.lifeFlow)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 내면의 성향: </span><span class="pdf-info-text">${tr(parsed.personality)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 재물 및 직업운: </span><span class="pdf-info-text">${tr(parsed.wealth)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 애정 및 결혼운: </span><span class="pdf-info-text">${tr(parsed.love)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 삶의 주의점: </span><span class="pdf-info-text">${tr(parsed.caution)}</span></div>
+      </div>
+      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${tr(parsed.fortuneTellerComment)}</div></div>
       <div class="pdf-tags">${tagsHtml}</div>`;
   }else{
     bodyHtml=`
-      <div class="pdf-section-title">未來의 배우자 · DESTINED PARTNER</div>
-      <div class="pdf-meta">첫 만남 · ${parsed.firstMeeting}</div>
+      <div class="pdf-section-title">미래 배우자 · DESTINED PARTNER</div>
+      <div class="pdf-meta">첫 만남 · ${tr(parsed.firstMeeting)}</div>
       <div class="pdf-img-wrap">${imgHtml}</div>
-      <div class="pdf-desc">${parsed.description}</div>
-      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${parsed.fortuneTellerComment}</div></div>
+      <div class="pdf-desc">${tr(parsed.description)}</div>
+      <div class="pdf-info-blocks">
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 닮은꼴 연예인: </span><span class="pdf-info-text">${tr(parsed.celebrity)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 동물 관상: </span><span class="pdf-info-text">${tr(parsed.animalFace)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 예상 직업군: </span><span class="pdf-info-text">${tr(parsed.job)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 만나기 전의 징조: </span><span class="pdf-info-text">${tr(parsed.signs)}</span></div>
+      </div>
+      <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${tr(parsed.fortuneTellerComment)}</div></div>
       <div class="pdf-tags">${tagsHtml}</div>`;
   }
 
@@ -637,7 +712,7 @@ function exportPDF(){
         <tr><td>분석일</td><td>${today}</td></tr>
       </table>
       ${bodyHtml}
-      <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today}</div>
+      <div class="pdf-footer">전체 결과는 운명의 거울 앱에서 확인하세요 · 사주 분석 결과 · ${today}</div>
     </div>`;
   window.print();
 }
