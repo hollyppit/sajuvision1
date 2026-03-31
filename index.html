@@ -801,7 +801,7 @@ async function exportPDF(){
   const imgHtml=imgShown?`<img src="${imgEl.src}" alt="결과 이미지" crossorigin="anonymous">`:`<div class="pdf-img-placeholder">이미지를 불러올 수 없습니다</div>`;
   const tagsHtml=(parsed.keywords||[]).map(k=>`<span class="pdf-tag">${k}</span>`).join('');
 
-  const tr = (t) => { if(!t)return ''; return t.length>60 ? t.slice(0,60)+'...' : t; };
+  const tr = (t) => { if(!t)return ''; return t; };
 
   let bodyHtml='';
   if(mode==='past'){
@@ -883,6 +883,8 @@ async function exportPDF(){
         <div style="font-size:10pt; line-height:1.7; color:#1a1008;">${parsed.mentorAdvice}</div>
       </div>
 
+      ${parsed.naeryeok ? `<div class="pdf-info-block" style="margin:14px 0;"><span class="pdf-info-title">✦ 명리학적 해석: </span><span class="pdf-info-text">${parsed.naeryeok}</span></div>` : ''}
+      ${parsed.successQuote ? `<div class="pdf-info-block" style="margin:8px 0 14px;"><span class="pdf-info-title">✦ 오늘의 성공 격언: </span><span class="pdf-info-text" style="font-style:italic;">${parsed.successQuote}</span></div>` : ''}
       <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${tr(parsed.fortuneTellerComment)}</div></div>`;
   }else{
     bodyHtml=`
@@ -900,8 +902,35 @@ async function exportPDF(){
       <div class="pdf-tags">${tagsHtml}</div>`;
   }
 
+  const pdfInlineStyles = `<style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    .pdf-page{width:794px;min-height:1123px;padding:64px 64px 72px;position:relative;background:#fff;color:#1a1008;font-family:'Gowun Batang',serif;}
+    .pdf-header{text-align:center;border-bottom:1.5px solid #c9963a;padding-bottom:14px;margin-bottom:20px;}
+    .pdf-title{font-family:'Nanum Myeongjo',serif;font-size:32px;font-weight:800;color:#8b5e1a;}
+    .pdf-subtitle{font-size:11px;letter-spacing:4px;color:#999;margin-top:4px;}
+    .pdf-section-title{font-family:'Nanum Myeongjo',serif;font-size:19px;color:#8b5e1a;letter-spacing:3px;margin-bottom:14px;padding-bottom:6px;border-bottom:1px solid #e8dcc8;}
+    .pdf-meta{font-size:13px;color:#7a6040;letter-spacing:2px;margin-bottom:12px;}
+    .pdf-img-wrap{text-align:center;margin:10px 0 14px;}
+    .pdf-img-wrap img{max-width:230px;max-height:200px;object-fit:contain;border:1px solid #e8dcc8;}
+    .pdf-img-placeholder{width:180px;height:240px;display:inline-flex;align-items:center;justify-content:center;background:#faf7f0;border:1px solid #e8dcc8;color:#ccc;font-size:13px;text-align:center;line-height:1.8;}
+    .pdf-desc{font-size:13px;line-height:1.9;text-align:justify;color:#2a2010;margin-bottom:14px;word-break:keep-all;}
+    .pdf-info-blocks{margin-bottom:14px;}
+    .pdf-info-block{margin-bottom:8px;}
+    .pdf-info-title{font-family:'Nanum Myeongjo',serif;font-size:13px;color:#8b5e1a;font-weight:700;}
+    .pdf-info-text{font-size:13px;line-height:1.9;color:#3a2a10;}
+    .pdf-fortune{background:#fdf8ee;border-left:3px solid #c9963a;padding:14px 18px;margin:14px 0;}
+    .pdf-fortune-label{font-size:10px;color:#c9963a;letter-spacing:3px;margin-bottom:6px;}
+    .pdf-fortune-text{font-size:13px;line-height:1.9;color:#4a3820;font-style:italic;word-break:keep-all;}
+    .pdf-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}
+    .pdf-tag{padding:4px 12px;border:1px solid #c9963a;font-size:11px;color:#8b5e1a;letter-spacing:1px;}
+    .pdf-info-table{width:100%;border-collapse:collapse;margin-bottom:18px;}
+    .pdf-info-table td{padding:7px 12px;font-size:13px;border-bottom:1px solid #f0e8d8;color:#3a2a10;}
+    .pdf-info-table td:first-child{color:#8b5e1a;width:28%;letter-spacing:1px;}
+    .pdf-footer{position:absolute;bottom:28px;left:64px;right:64px;text-align:center;font-size:10px;color:#bbb;letter-spacing:2px;border-top:1px solid #e8dcc8;padding-top:8px;}
+  </style>`;
+
   const printAreaEl = document.getElementById('printArea');
-  printAreaEl.innerHTML=`
+  printAreaEl.innerHTML= pdfInlineStyles + `
     <div class="pdf-page">
       <div class="pdf-header"><div class="pdf-title">운명의 거울</div><div class="pdf-subtitle">사주로 읽는 전생과 미래의 인연</div></div>
       <table class="pdf-info-table">
@@ -928,7 +957,8 @@ async function exportPDF(){
   stepEl.textContent = 'PDF를 생성하는 중...';
 
   const origStyle = printAreaEl.style.cssText;
-  printAreaEl.style.cssText = 'display:block !important; position:fixed; left:-9999px; top:0; width:210mm; background:#fff; color:#1a1008; font-family:\'Gowun Batang\',serif;';
+  // 794px = A4 width at 96dpi (210mm * 96 / 25.4)
+  printAreaEl.style.cssText = 'display:block !important; position:fixed; left:-9999px; top:0; width:794px; background:#fff; color:#1a1008; font-family:\'Gowun Batang\',serif;';
 
   try {
     await document.fonts.ready;
@@ -938,7 +968,9 @@ async function exportPDF(){
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
-      logging: false
+      logging: false,
+      width: 794,
+      windowWidth: 794
     });
 
     const { jsPDF } = window.jspdf;
@@ -947,16 +979,25 @@ async function exportPDF(){
     const pdfPageH = 297;
     const imgW = pdfPageW;
     const imgH = (canvas.height / canvas.width) * imgW;
-    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
     if(imgH <= pdfPageH){
       pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH);
     } else {
-      let yOff = 0;
-      while(yOff < imgH){
-        if(yOff > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, -yOff, imgW, imgH);
-        yOff += pdfPageH;
+      // 페이지별 픽셀 높이 계산 (scale:2 적용)
+      const pixelsPerPage = (pdfPageH / imgW) * canvas.width;
+      let pageYPx = 0;
+      while(pageYPx < canvas.height){
+        if(pageYPx > 0) pdf.addPage();
+        const sliceH = Math.min(pixelsPerPage, canvas.height - pageYPx);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceH;
+        const ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, pageYPx, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+        const sliceImgH = (sliceH / canvas.width) * imgW;
+        pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgW, sliceImgH);
+        pageYPx += pixelsPerPage;
       }
     }
 
