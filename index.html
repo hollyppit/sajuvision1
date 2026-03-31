@@ -339,9 +339,19 @@ select option{background:#1a1008;}
       </div>
 
       <div id="todayCautions"></div>
-      
+
       <div class="mentor-card">
         <div class="mentor-text" id="todayMentorAdvice"></div>
+      </div>
+
+      <div class="info-block" id="todayNaeryeokBlock" style="margin-top:18px;">
+        <div class="info-block-title"><i>✦</i> 명리학적 해석</div>
+        <div class="info-block-text" id="todayNaeryeok"></div>
+      </div>
+
+      <div class="info-block" id="todaySuccessQuoteBlock" style="margin-top:12px;">
+        <div class="info-block-title"><i>✦</i> 오늘의 성공 격언</div>
+        <div class="info-block-text" id="todaySuccessQuote" style="font-style:italic;"></div>
       </div>
 
       <div class="fortune-comment">
@@ -592,7 +602,7 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - imagePrompt: 이 캐릭터의 관상적 특징을 극적으로 표현한 영문 초상화 프롬프트. face reading portrait, [특징], dramatic lighting, traditional Korean fortune teller aesthetic, mystical atmosphere, 8k`;
   } else if (mode === 'today') {
     const todayStr = new Date().toLocaleDateString('ko-KR');
-    jsonTemplate = `{"dayFlow":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","fortuneTellerComment":""}`;
+    jsonTemplate = `{"dayFlow":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","naeryeok":"","successQuote":"","fortuneTellerComment":""}`;
     modeInstruction = `
 분석: 오늘의 운세 (기준 날짜: ${todayStr})
 시스템 톤: 냉철하고 객관적인 멘토. 좋은 말만 하지 않음. 현실적 조언 중심.
@@ -602,6 +612,8 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - cautions: 주의 항목 3개 (제목+설명)
 - hourlyFlow: 06시부터 22시까지 2시간 간격 9개 데이터 (score는 0~100)
 - mentorAdvice: 냉철한 멘토의 오늘 핵심 조언 (3~4문장. 현실적이고 직설적으로. 칭찬 없음.)
+- naeryeok: 이 사람의 사주 천간·지지·오행을 바탕으로 오늘의 기운을 명리학적으로 해석 (2~3문장. 용신·희신·기신 등 구체적 명리 용어 포함.)
+- successQuote: 오늘의 사주 기운과 어울리는 동서양 성공 격언 또는 명언 1개 (한국어로, 출처·인물명 포함)
 - fortuneTellerComment: 점술가 스타일의 마무리 한 줄`;
   } else {
     jsonTemplate = `{"firstMeeting":"","appearance":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
@@ -756,6 +768,27 @@ function renderToday(data) {
   `).join('');
   
   document.getElementById('todayMentorAdvice').textContent = data.mentorAdvice;
+
+  // 명리학적 해석
+  const naeryeokBlock = document.getElementById('todayNaeryeokBlock');
+  const naeryeokEl = document.getElementById('todayNaeryeok');
+  if (data.naeryeok) {
+    naeryeokEl.textContent = data.naeryeok;
+    naeryeokBlock.style.display = 'block';
+  } else {
+    naeryeokBlock.style.display = 'none';
+  }
+
+  // 성공 격언
+  const successQuoteBlock = document.getElementById('todaySuccessQuoteBlock');
+  const successQuoteEl = document.getElementById('todaySuccessQuote');
+  if (data.successQuote) {
+    successQuoteEl.textContent = data.successQuote;
+    successQuoteBlock.style.display = 'block';
+  } else {
+    successQuoteBlock.style.display = 'none';
+  }
+
   document.getElementById('todayFortune').textContent = data.fortuneTellerComment;
 }
 
