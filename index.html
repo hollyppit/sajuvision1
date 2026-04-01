@@ -565,23 +565,23 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
   if (mode === 'past') {
     jsonTemplate = `{"era":"","role":"","lifeStory":"","relationships":"","death":"","karma":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
-분석 톤: 냉철하고 솔직한 술사. 좋은 말만 늘어놓지 않는다. 불리한 기운, 약점, 경고할 사항도 직접적으로 언급한다. 단, 점술가 특유의 무게감과 품위는 유지한다. 막연한 위로나 긍정적 포장 없이 사실대로 읽어준다.
+분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 
 분석: 이 사람의 전생
 - era: 전생의 시대 (예: 조선 중기, 고려 말 등)
 - role: 전생의 신분/직업
-- lifeStory: 유년기부터 중년까지 인생 흐름 서술 150자 (파란만장하거나 고단했던 면도 포함하여 사실적으로)
+- lifeStory: 유년기부터 중년까지 인생 흐름 서술 150자 (기쁨과 고난을 균형 있게 포함하여 사실적으로)
 - relationships: 전생의 핵심 인연(은인/원수/사랑 등) 100자
-- death: 어떤 죽음을 맞았는지, 마지막 감정 80자 (억울하거나 비극적인 죽음이면 그대로 서술)
-- karma: 전생에서 현생으로 이어진 업보 80자 (현생에 미치는 부정적 영향도 구체적으로 언급)
+- death: 어떤 죽음을 맞았는지, 마지막 감정 80자 (담담하고 중립적으로 서술)
+- karma: 전생에서 현생으로 이어진 업보 80자 (현생에 미치는 영향을 긍정·부정 균형 있게 언급)
 - description: 전생 삶에 대한 시적이고 신비로운 서술 200자 내외.
-- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 150자 내외 (경고성 조언 포함. 현생에서 반드시 주의해야 할 것을 직접적으로).
+- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 150자 내외 (업보의 긍정적 측면과 주의할 점을 균형 있게).
 - keywords: 전생을 상징하는 키워드 4개
 - imagePrompt: 영문 이미지 프롬프트. "${gender==='남성'?'Male':'Female'} figure in [era] Korean historical setting, [role], dramatic lighting, ink wash painting style, mysterious atmosphere, 8k"`;
   } else if (mode === 'face') {
     jsonTemplate = `{"category":"","faceType":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
-분석 톤: 냉철하고 솔직한 술사. 좋은 말만 늘어놓지 않는다. 불리한 기운, 약점, 경고할 사항도 직접적으로 언급한다. 단, 점술가 특유의 무게감과 품위는 유지한다. 막연한 위로나 긍정적 포장 없이 사실대로 읽어준다.
+분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 
 [사주 참고 정보]
 - 이름: ${name}
@@ -592,12 +592,12 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - category: 관상 유형 (예: 목형(木形) · 귀인상)
 - faceType: 이목구비 특징 한 줄 요약
 - lifeFlow: 청년기/중년기/말년기 인생 흐름 150자
-- personality: 성격 강점과 결함, 대인관계 약점 100자
+- personality: 성격 강점과 보완할 점, 대인관계 특성 100자
 - wealth: 재물운·직업운 80자
 - love: 연애·결혼운 80자
-- caution: 이 관상에서 읽히는 구체적 위험 요소와 주의할 점 80자
+- caution: 이 관상에서 읽히는 주의할 점과 발전 방향 80자
 - description: 이 캐릭터의 관상에 대한 신비롭고 시적인 서술 200자 내외. 이목구비별 특징, 성격, 운세 흐름 포함.
-- fortuneTellerComment: 점술가가 직접("당신의 얼굴에는...") 말하듯 핵심 관상 조언 150자 내외 (위로보다 경고에 가까운 한 마디).
+- fortuneTellerComment: 점술가가 직접("당신의 얼굴에는...") 말하듯 핵심 관상 조언 150자 내외 (강점과 주의할 점을 균형 있게).
 - keywords: 이 관상을 상징하는 키워드 4개
 - imagePrompt: 이 캐릭터의 관상적 특징을 극적으로 표현한 영문 초상화 프롬프트. face reading portrait, [특징], dramatic lighting, traditional Korean fortune teller aesthetic, mystical atmosphere, 8k`;
   } else if (mode === 'today') {
@@ -605,20 +605,20 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
     jsonTemplate = `{"dayFlow":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","naeryeok":"","successQuote":"","fortuneTellerComment":""}`;
     modeInstruction = `
 분석: 오늘의 운세 (기준 날짜: ${todayStr})
-시스템 톤: 냉철하고 객관적인 멘토. 좋은 말만 하지 않음. 현실적 조언 중심.
+시스템 톤: 명리학에 근거한 중립적이고 객관적인 멘토. 긍정적 기운과 주의할 기운을 균형 있게 분석. 현실적 조언 중심.
 
-- dayFlow: 오늘 하루 전체적인 기운 흐름 (2~3문장, 직설적으로)
+- dayFlow: 오늘 하루 전체적인 기운 흐름 (2~3문장, 길한 기운과 흉한 기운을 균형 있게)
 - luckyElements: 행운 요소 5개 (색상, 방향, 음식, 시간대, 행운의 말)
 - cautions: 주의 항목 3개 (제목+설명)
 - hourlyFlow: 06시부터 22시까지 2시간 간격 9개 데이터 (score는 0~100)
-- mentorAdvice: 냉철한 멘토의 오늘 핵심 조언 (3~4문장. 현실적이고 직설적으로. 칭찬 없음.)
+- mentorAdvice: 명리학적 근거의 오늘 핵심 조언 (3~4문장. 현실적이고 직설적으로. 긍정·부정 균형 있게.)
 - naeryeok: 이 사람의 사주 천간·지지·오행을 바탕으로 오늘의 기운을 명리학적으로 해석 (2~3문장. 용신·희신·기신 등 구체적 명리 용어 포함.)
 - successQuote: 오늘의 사주 기운과 어울리는 동서양 성공 격언 또는 명언 1개 (한국어로, 출처·인물명 포함)
 - fortuneTellerComment: 점술가 스타일의 마무리 한 줄`;
   } else {
     jsonTemplate = `{"firstMeeting":"","appearance":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
-분석 톤: 냉철하고 솔직한 술사. 좋은 말만 늘어놓지 않는다. 불리한 기운, 약점, 경고할 사항도 직접적으로 언급한다. 단, 점술가 특유의 무게감과 품위는 유지한다. 막연한 위로나 긍정적 포장 없이 사실대로 읽어준다.
+분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 
 분석: 이 사람의 미래 배우자
 - firstMeeting: 처음 만나는 상황과 장소
@@ -626,10 +626,10 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - celebrity: 닮은 한국 연예인 1~2명
 - animalFace: 동물 관상 (예: 여우상) + 한 문장 이유
 - job: 추측 직업군 2~3가지 + 이유
-- signs: 만나기 전 나타나는 징조 2~3가지 (불길한 신호나 시련 포함 가능)
-- personality: 배우자 성격 특징
-- description: 미래 배우자에 대한 신비로운 서술 200자 내외. (성격적 단점이나 갈등 요소도 포함하여 사실적으로)
-- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 150자 내외 (인연의 아름다움뿐 아니라 조심해야 할 것도 언급).
+- signs: 만나기 전 나타나는 징조 2~3가지 (길한 신호와 준비할 사항 균형 있게)
+- personality: 배우자 성격 특징 (강점과 보완할 점 모두)
+- description: 미래 배우자에 대한 신비로운 서술 200자 내외. (긍정적 면모와 함께할 때 주의할 점을 균형 있게 포함하여 사실적으로)
+- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 150자 내외 (인연의 아름다움과 함께 성숙한 관계를 위한 조언 균형 있게).
 - keywords: 이 인연을 상징하는 키워드 4개
 - imagePrompt: 영문 이미지 프롬프트. "Portrait of a ${gender==='남성'?'beautiful Korean woman':'handsome Korean man'}, [appearance], soft warm lighting, photorealistic, romantic atmosphere, 8k"`;
   }
@@ -843,7 +843,7 @@ async function exportPDF(){
       const x = i * (svgW / hFlow.length) + 1;
       const barHeight = (d.score / maxH) * (svgH - 15);
       const y = svgH - 5 - barHeight;
-      let color = '#8b1a1a'; // low-ish
+      let color = '#8b1a1a';
       if (d.score >= 70) color = '#c9963a';
       else if (d.score >= 50) color = '#e8dcc8';
       return `
@@ -853,36 +853,34 @@ async function exportPDF(){
       `;
     }).join('');
 
-    bodyHtml=`
+    // 페이지 1: 섹션 타이틀 + 일진 + 행운 요소 + 시간대 차트
+    bodyHtml = `__TODAY_PAGE1__:
       <div class="pdf-section-title">오늘의 행운 솔루션 · TODAY'S FORTUNE</div>
       <div class="pdf-meta">${today}</div>
       <div class="pdf-desc" style="font-size:12pt; text-align:center; color:#8b5e1a; font-weight:700;">${parsed.dayFlow}</div>
-      
       <div class="pdf-info-blocks">
         ${(parsed.luckyElements || []).map(el => `
           <div class="pdf-info-block"><span class="pdf-info-title">✦ ${el.category}: </span><span class="pdf-info-text">${el.value}</span></div>
         `).join('')}
       </div>
-
       <div style="margin:20px 0; border:1px solid #e8dcc8; padding:10px;">
         <div style="font-size:9pt; color:#8b5e1a; margin-bottom:10px; text-align:center;">시간대별 운세 흐름</div>
         <svg viewBox="0 0 ${svgW} ${svgH}" width="100%">${bars}</svg>
       </div>
-
+__TODAY_PAGE2__:
+      <div class="pdf-section-title">오늘의 운세 · 상세 분석</div>
       <div style="margin-bottom:15px;">
         ${(parsed.cautions || []).map(c => `
-          <div style="border:1px solid #e8a0a0; background:#fef8f8; padding:8px; margin-bottom:5px;">
+          <div style="border:1px solid #e8a0a0; background:#fef8f8; padding:8px; margin-bottom:8px;">
             <div style="font-size:10pt; color:#8b1a1a; font-weight:700;">✦ ${c.title}</div>
-            <div style="font-size:9pt; color:#444;">${c.desc}</div>
+            <div style="font-size:9pt; color:#444; margin-top:3px;">${c.desc}</div>
           </div>
         `).join('')}
       </div>
-
       <div style="background:#fdf8ee; border:1px solid #c9963a; padding:15px; margin:15px 0;">
         <div style="font-size:8pt; color:#c9963a; letter-spacing:2px; margin-bottom:5px;">MENTOR ADVICE</div>
         <div style="font-size:10pt; line-height:1.7; color:#1a1008;">${parsed.mentorAdvice}</div>
       </div>
-
       ${parsed.naeryeok ? `<div class="pdf-info-block" style="margin:14px 0;"><span class="pdf-info-title">✦ 명리학적 해석: </span><span class="pdf-info-text">${parsed.naeryeok}</span></div>` : ''}
       ${parsed.successQuote ? `<div class="pdf-info-block" style="margin:8px 0 14px;"><span class="pdf-info-title">✦ 오늘의 성공 격언: </span><span class="pdf-info-text" style="font-style:italic;">${parsed.successQuote}</span></div>` : ''}
       <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${tr(parsed.fortuneTellerComment)}</div></div>`;
@@ -930,19 +928,38 @@ async function exportPDF(){
   </style>`;
 
   const printAreaEl = document.getElementById('printArea');
-  printAreaEl.innerHTML= pdfInlineStyles + `
-    <div class="pdf-page">
-      <div class="pdf-header"><div class="pdf-title">운명의 거울</div><div class="pdf-subtitle">사주로 읽는 전생과 미래의 인연</div></div>
-      <table class="pdf-info-table">
-        <tr><td>이름</td><td>${name}</td></tr>
-        <tr><td>생년월일</td><td>${birthDate} (${calType})</td></tr>
-        <tr><td>태어난 시</td><td>${birthHour}</td></tr>
-        <tr><td>성별</td><td>${gender}</td></tr>
-        <tr><td>분석일</td><td>${today}</td></tr>
-      </table>
-      ${bodyHtml}
-      <div class="pdf-footer">전체 결과는 운명의 거울 앱에서 확인하세요 · 사주 분석 결과 · ${today}</div>
-    </div>`;
+  const pdfHeaderHtml = `<div class="pdf-header"><div class="pdf-title">운명의 거울</div><div class="pdf-subtitle">사주로 읽는 전생과 미래의 인연</div></div>`;
+  const pdfInfoTableHtml = `
+    <table class="pdf-info-table">
+      <tr><td>이름</td><td>${name}</td></tr>
+      <tr><td>생년월일</td><td>${birthDate} (${calType})</td></tr>
+      <tr><td>태어난 시</td><td>${birthHour}</td></tr>
+      <tr><td>성별</td><td>${gender}</td></tr>
+      <tr><td>분석일</td><td>${today}</td></tr>
+    </table>`;
+
+  let pagesHtml;
+  if(mode === 'today' && bodyHtml.startsWith('__TODAY_PAGE1__:')){
+    const splitIdx = bodyHtml.indexOf('__TODAY_PAGE2__:');
+    const page1Body = bodyHtml.slice('__TODAY_PAGE1__:'.length, splitIdx);
+    const page2Body = bodyHtml.slice(splitIdx + '__TODAY_PAGE2__:'.length);
+    pagesHtml = `
+      <div class="pdf-page">
+        ${pdfHeaderHtml}${pdfInfoTableHtml}${page1Body}
+        <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today} · 1/2</div>
+      </div>
+      <div class="pdf-page">
+        ${pdfHeaderHtml}${page2Body}
+        <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today} · 2/2</div>
+      </div>`;
+  } else {
+    pagesHtml = `
+      <div class="pdf-page">
+        ${pdfHeaderHtml}${pdfInfoTableHtml}${bodyHtml}
+        <div class="pdf-footer">전체 결과는 운명의 거울 앱에서 확인하세요 · 사주 분석 결과 · ${today}</div>
+      </div>`;
+  }
+  printAreaEl.innerHTML = pdfInlineStyles + pagesHtml;
 
   const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   if(!isMobile){
@@ -950,55 +967,48 @@ async function exportPDF(){
     return;
   }
 
-  // 모바일: html2canvas + jsPDF로 PDF 생성 후 공유/저장
+  // 모바일: html2canvas + jsPDF로 각 pdf-page를 개별 캡처하여 A4 PDF 생성
   const overlay = document.getElementById('loadingOverlay');
   const stepEl = document.getElementById('loadingStep');
   overlay.classList.add('show');
   stepEl.textContent = 'PDF를 생성하는 중...';
 
   const origStyle = printAreaEl.style.cssText;
-  // 794px = A4 width at 96dpi (210mm * 96 / 25.4)
-  printAreaEl.style.cssText = 'display:block !important; position:fixed; left:-9999px; top:0; width:794px; background:#fff; color:#1a1008; font-family:\'Gowun Batang\',serif;';
+  // 794px = A4 width at 96dpi (210mm × 96 / 25.4)
+  printAreaEl.style.cssText = 'display:block !important; position:fixed; left:-9999px; top:0; width:794px; background:#fff;';
 
   try {
     await document.fonts.ready;
-
-    const canvas = await html2canvas(printAreaEl, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      width: 794,
-      windowWidth: 794
-    });
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const pdfPageW = 210;
     const pdfPageH = 297;
-    const imgW = pdfPageW;
-    const imgH = (canvas.height / canvas.width) * imgW;
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-    if(imgH <= pdfPageH){
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH);
-    } else {
-      // 페이지별 픽셀 높이 계산 (scale:2 적용)
-      const pixelsPerPage = (pdfPageH / imgW) * canvas.width;
-      let pageYPx = 0;
-      while(pageYPx < canvas.height){
-        if(pageYPx > 0) pdf.addPage();
-        const sliceH = Math.min(pixelsPerPage, canvas.height - pageYPx);
-        const sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width = canvas.width;
-        sliceCanvas.height = sliceH;
-        const ctx = sliceCanvas.getContext('2d');
-        ctx.drawImage(canvas, 0, pageYPx, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
-        const sliceImgH = (sliceH / canvas.width) * imgW;
-        pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgW, sliceImgH);
-        pageYPx += pixelsPerPage;
-      }
+    // 각 .pdf-page 요소를 독립적으로 캡처 → 임의 슬라이싱 없이 깔끔한 A4 페이지 구성
+    const pageEls = printAreaEl.querySelectorAll('.pdf-page');
+    for(let i = 0; i < pageEls.length; i++){
+      if(i > 0) pdf.addPage();
+      const pageEl = pageEls[i];
+
+      // html2canvas 렌더링 전 각 페이지를 정확한 A4 크기(794×1123px)로 고정
+      pageEl.style.height = '1123px';
+      pageEl.style.overflow = 'hidden';
+
+      const pageCanvas = await html2canvas(pageEl, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 794,
+        height: 1123,
+        windowWidth: 794
+      });
+
+      const imgData = pageCanvas.toDataURL('image/jpeg', 0.95);
+      // 캡처된 이미지를 정확히 A4 한 페이지에 배치
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfPageW, pdfPageH);
     }
 
     const fileName = `운명의거울_${name}_${new Date().toISOString().slice(0,10)}.pdf`;
