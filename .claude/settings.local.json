@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(node -e \"const p=require\\('e:/만트라 스튜디오 사업/앱 개발 소스/운명의 거울_사주 전생, 미래 배우자/unmyeong-mirror/node_modules/@apps-in-toss/web-framework/dist-web/index.js'\\); console.log\\(Object.keys\\(p\\).slice\\(0,20\\)\\)\")",
+      "Bash(node -e \"const p=require\\('e:/만트라 스튜디오 사업/앱 개발 소스/운명의 거울_사주 전생, 미래 배우자/unmyeong-mirror/node_modules/@apps-in-toss/web-framework/dist-web/index.js'\\); console.log\\(Object.keys\\(p\\).filter\\(k=>k.toLowerCase\\(\\).includes\\('init'\\)\\)\\)\")",
+      "WebFetch(domain:developers-apps-in-toss.toss.im)",
+      "Bash(curl -s \"https://developers-apps-in-toss.toss.im/llms.txt\")",
+      "Bash(gunzip)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "Bash(npx vite:*)",
+      "Bash(python -c ':*)"
+    ]
+  }
+}
