@@ -462,27 +462,33 @@ const unlockedModes = {}; // {past:true, spouse:true, face:true}
 const AD_GROUP_ID='ait-ad-test-interstitial-id';
 let _tossAdsInited=false;
 function ensureAdsInit(cb){
-  if(!window.TossAds)return;
+  if(typeof window.TossAds==='undefined')return;
   if(_tossAdsInited){cb();return;}
-  TossAds.initialize({callbacks:{
-    onInitialized(){_tossAdsInited=true;cb();},
-    onInitializationFailed(e){console.warn('[TossAds] init failed',e);}
-  }});
+  try{
+    TossAds.initialize({callbacks:{
+      onInitialized(){_tossAdsInited=true;cb();},
+      onInitializationFailed(e){console.warn('[TossAds] init failed',e);}
+    }});
+  }catch(e){console.warn('[TossAds] initialize error',e);}
 }
 function attachAd(id){
   const el=document.getElementById(id);
   if(!el)return;
   el.innerHTML='';
+  el.style.display='none'; // 기본 숨김: 토스 앱 외 환경에서 광고 미노출
+  if(typeof window.TossAds==='undefined')return;
   el.style.display='';
   ensureAdsInit(()=>{
-    if(!TossAds.attachBanner.isSupported()){el.style.display='none';return;}
-    TossAds.attachBanner(AD_GROUP_ID,el,{
-      theme:'dark',
-      callbacks:{
-        onAdFailedToRender(){el.style.display='none';},
-        onNoFill(){el.style.display='none';}
-      }
-    });
+    try{
+      if(!TossAds.attachBanner.isSupported()){el.style.display='none';return;}
+      TossAds.attachBanner(AD_GROUP_ID,el,{
+        theme:'dark',
+        callbacks:{
+          onAdFailedToRender(){el.style.display='none';},
+          onNoFill(){el.style.display='none';}
+        }
+      });
+    }catch(e){console.warn('[TossAds] attachBanner error',e);el.style.display='none';}
   });
 }
 
@@ -816,7 +822,7 @@ function renderPastResult(data,imgUrl,unlocked){
       <div class="info-blocks">${blocks}</div>
       ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
     </div>
-    ${unlocked?'':(isTossApp()?`<button class="btn-payment" onclick="doPayment('past')">🔮 전체 결과 보기 · ₩1,500</button>`:`<div class="toss-app-notice">🔮 전체 결과는 토스 앱에서 이용 가능합니다</div>`)}
+    ${unlocked?'':`<button class="btn-payment" onclick="doPayment('past')">🔮 전체 결과 보기 · ₩1,500</button>`}
     <div class="toss-ad-wrap" id="pastAdBottom"></div>
   `;
   attachAd('pastAdBottom');
@@ -856,7 +862,7 @@ function renderSpouseResult(data,imgUrl,unlocked){
       <div class="info-blocks">${blocks}</div>
       ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
     </div>
-    ${unlocked?'':(isTossApp()?`<button class="btn-payment" onclick="doPayment('spouse')">🔮 전체 결과 보기 · ₩1,500</button>`:`<div class="toss-app-notice">🔮 전체 결과는 토스 앱에서 이용 가능합니다</div>`)}
+    ${unlocked?'':`<button class="btn-payment" onclick="doPayment('spouse')">🔮 전체 결과 보기 · ₩1,500</button>`}
     <div class="toss-ad-wrap" id="spouseAdBottom"></div>
   `;
   attachAd('spouseAdBottom');
@@ -896,7 +902,7 @@ function renderFaceResult(data,imgUrl,unlocked){
       <div class="info-blocks">${blocks}</div>
       ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
     </div>
-    ${unlocked?'':(isTossApp()?`<button class="btn-payment" onclick="doPayment('face')">🔮 전체 결과 보기 · ₩1,500</button>`:`<div class="toss-app-notice">🔮 전체 결과는 토스 앱에서 이용 가능합니다</div>`)}
+    ${unlocked?'':`<button class="btn-payment" onclick="doPayment('face')">🔮 전체 결과 보기 · ₩1,500</button>`}
     <div class="toss-ad-wrap" id="faceAdBottom"></div>
   `;
   attachAd('faceAdBottom');
