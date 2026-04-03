@@ -180,6 +180,7 @@ select option{background:#1a1008;}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-track{background:var(--deep);}
 ::-webkit-scrollbar-thumb{background:rgba(201,150,58,.3);}
+.toss-ad-wrap{width:100%;margin:20px 0;overflow:hidden;}
 </style>
 </head>
 <body>
@@ -339,7 +340,9 @@ select option{background:#1a1008;}
       <div class="result-card-title">오늘의 행운 솔루션<small>TODAY'S LUCK SOLUTION</small></div>
       <div class="result-meta" id="todayMeta"></div>
       <div class="result-desc" id="todayFlow" style="border-left:none; padding-left:0; text-align:center; font-size:18px; font-weight:700; color:var(--gold-light);"></div>
-      
+
+      <div class="toss-ad-wrap" id="todayAdTop"></div>
+
       <div class="today-lucky-grid" id="todayLuckyElements"></div>
       
       <div class="chart-container">
@@ -369,6 +372,8 @@ select option{background:#1a1008;}
         <div class="fortune-label">✦ 점술가의 말</div>
         <div class="fortune-text" id="todayFortune"></div>
       </div>
+
+      <div class="toss-ad-wrap" id="todayAdBottom"></div>
     </div>
 
     <button class="btn-pdf" onclick="exportPDF()">
@@ -440,6 +445,34 @@ const unlockedModes = {}; // {past:true, spouse:true, face:true}
     c.appendChild(s);
   }
 })();
+
+// ── TossAds Banner ──────────────────────────────────────────────────────────
+const AD_GROUP_ID='ait-ad-test-interstitial-id';
+let _tossAdsInited=false;
+function ensureAdsInit(cb){
+  if(!window.TossAds)return;
+  if(_tossAdsInited){cb();return;}
+  TossAds.initialize({callbacks:{
+    onInitialized(){_tossAdsInited=true;cb();},
+    onInitializationFailed(e){console.warn('[TossAds] init failed',e);}
+  }});
+}
+function attachAd(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.innerHTML='';
+  el.style.display='';
+  ensureAdsInit(()=>{
+    if(!TossAds.attachBanner.isSupported()){el.style.display='none';return;}
+    TossAds.attachBanner(AD_GROUP_ID,el,{
+      theme:'dark',
+      callbacks:{
+        onAdFailedToRender(){el.style.display='none';},
+        onNoFill(){el.style.display='none';}
+      }
+    });
+  });
+}
 
 function setMode(mode){
   currentMode=mode;
@@ -772,7 +805,9 @@ function renderPastResult(data,imgUrl,unlocked){
       ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
     </div>
     ${unlocked?'':`<button class="btn-payment" onclick="doPayment('past')">🔮 전체 결과 보기 · ₩1,500</button>`}
+    <div class="toss-ad-wrap" id="pastAdBottom"></div>
   `;
+  attachAd('pastAdBottom');
 }
 
 function renderSpouseResult(data,imgUrl,unlocked){
@@ -810,7 +845,9 @@ function renderSpouseResult(data,imgUrl,unlocked){
       ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
     </div>
     ${unlocked?'':`<button class="btn-payment" onclick="doPayment('spouse')">🔮 전체 결과 보기 · ₩1,500</button>`}
+    <div class="toss-ad-wrap" id="spouseAdBottom"></div>
   `;
+  attachAd('spouseAdBottom');
 }
 
 function renderFaceResult(data,imgUrl,unlocked){
@@ -848,7 +885,9 @@ function renderFaceResult(data,imgUrl,unlocked){
       ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
     </div>
     ${unlocked?'':`<button class="btn-payment" onclick="doPayment('face')">🔮 전체 결과 보기 · ₩1,500</button>`}
+    <div class="toss-ad-wrap" id="faceAdBottom"></div>
   `;
+  attachAd('faceAdBottom');
 }
 
 function renderImg(imgId,phId,url){
@@ -928,6 +967,9 @@ function renderToday(data){
   else sqBlock.style.display='none';
 
   document.getElementById('todayFortune').textContent=data.fortuneTellerComment;
+
+  attachAd('todayAdTop');
+  attachAd('todayAdBottom');
 }
 
 // ── Payment ──────────────────────────────────────────────────────────────────
