@@ -370,6 +370,11 @@ h1 {
 })();
 
 // =============================================
+// 토스 앱 환경 감지
+// =============================================
+function isTossApp(){ return !!window.ReactNativeWebView; }
+
+// =============================================
 // 이미 로그인된 경우 바로 index.html로 이동
 // =============================================
 (function(){
@@ -377,14 +382,28 @@ h1 {
     const saved = sessionStorage.getItem('tossUser');
     if (saved) {
       location.replace('index.html');
+      return;
+    }
+    // 브라우저 환경(토스 앱 아님): 로그인 없이 index.html로 이동
+    if (!isTossApp()) {
+      location.replace('index.html');
     }
   } catch(_) {}
 })();
 
 // =============================================
-// 토스 로그인
+// 토스 로그인 (토스 앱 환경에서만 동작)
 // =============================================
 document.getElementById('btnTossLogin').addEventListener('click', async function() {
+  // 브라우저 환경: 콘솔에만 출력, 버튼 안내로 대체
+  if (!isTossApp()) {
+    console.warn('[intro] 토스 앱 환경이 아닙니다. 로그인 불가.');
+    document.getElementById('btnTossLabel').textContent = '토스 앱에서 이용 가능합니다';
+    this.disabled = true;
+    this.style.opacity = '0.5';
+    return;
+  }
+
   const btn   = this;
   const label = document.getElementById('btnTossLabel');
   const errEl = document.getElementById('loginError');
