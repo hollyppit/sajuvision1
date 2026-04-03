@@ -337,12 +337,13 @@ h1 {
     <div class="divider"></div>
 
     <!-- 토스로 시작하기 버튼 -->
-    <a class="btn-toss" href="index.html">
+    <button class="btn-toss" id="btnTossLogin" type="button">
       <svg class="btn-toss-icon" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
       </svg>
-      <span>토스로 시작하기</span>
-    </a>
+      <span id="btnTossLabel">토스로 시작하기</span>
+    </button>
+    <p id="loginError" style="display:none;margin-top:12px;font-size:12px;color:#e8a0a0;text-align:center;letter-spacing:1px;"></p>
   </div>
 
   <!-- 하단 안내 -->
@@ -353,8 +354,11 @@ h1 {
 
 </div>
 
+<script src="toss-sdk.js"></script>
 <script>
+// =============================================
 // 별 생성
+// =============================================
 (function(){
   const c = document.getElementById('stars');
   for(let i = 0; i < 60; i++){
@@ -364,6 +368,65 @@ h1 {
     c.appendChild(s);
   }
 })();
+
+// =============================================
+// 이미 로그인된 경우 바로 index.html로 이동
+// =============================================
+(function(){
+  try {
+    const saved = sessionStorage.getItem('tossUser');
+    if (saved) {
+      location.replace('index.html');
+    }
+  } catch(_) {}
+})();
+
+// =============================================
+// 토스 로그인
+// =============================================
+document.getElementById('btnTossLogin').addEventListener('click', async function() {
+  const btn   = this;
+  const label = document.getElementById('btnTossLabel');
+  const errEl = document.getElementById('loginError');
+
+  btn.disabled = true;
+  label.textContent = '로그인 중...';
+  errEl.style.display = 'none';
+
+  try {
+    // 1) 토스 SDK로 인증 코드 획득
+    const { authorizationCode, referrer } = await window.TossSDK.appLogin();
+
+    label.textContent = '정보를 가져오는 중...';
+
+    // 2) 백엔드에서 토큰 교환 → 사용자 정보 조회
+    const res = await fetch('/api/toss-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authorizationCode, referrer }),
+    });
+
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({}));
+      throw new Error(error || '로그인 서버 오류');
+    }
+
+    const user = await res.json();
+
+    // 3) sessionStorage에 저장
+    sessionStorage.setItem('tossUser', JSON.stringify(user));
+
+    // 4) 메인 앱으로 이동
+    location.replace('index.html');
+
+  } catch (err) {
+    console.error('[intro] 로그인 실패', err);
+    label.textContent = '토스로 시작하기';
+    btn.disabled = false;
+    errEl.textContent = '⚠ ' + (err.message || '로그인 중 오류가 발생했습니다.');
+    errEl.style.display = 'block';
+  }
+});
 </script>
 
 </body>

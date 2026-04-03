@@ -376,6 +376,44 @@ select option{background:#1a1008;}
 <div id="printArea"></div>
 
 <script>
+// =============================================
+// 인증 가드: 로그인 안 한 경우 intro로 리다이렉트
+// =============================================
+(function(){
+  try {
+    const raw = sessionStorage.getItem('tossUser');
+    if (!raw) {
+      location.replace('intro.html');
+      return;
+    }
+    // 사용자 정보를 폼에 자동 입력
+    const user = JSON.parse(raw);
+    window.addEventListener('DOMContentLoaded', function() {
+      // 이름
+      const nameEl = document.getElementById('name');
+      if (nameEl && user.name) nameEl.value = user.name;
+
+      // 생년월일: 토스 birthdate = 'YYYYMMDD' → input[type=date] = 'YYYY-MM-DD'
+      const birthEl = document.getElementById('birthDate');
+      if (birthEl && user.birthdate && user.birthdate.length === 8) {
+        const bd = user.birthdate;
+        birthEl.value = bd.slice(0,4) + '-' + bd.slice(4,6) + '-' + bd.slice(6,8);
+      }
+
+      // 성별: 'male' → '남성', 'female' → '여성'
+      const genderEl = document.getElementById('gender');
+      if (genderEl && user.gender) {
+        const map = { male: '남성', female: '여성' };
+        const val = map[user.gender.toLowerCase()];
+        if (val) genderEl.value = val;
+      }
+    });
+  } catch(e) {
+    sessionStorage.removeItem('tossUser');
+    location.replace('intro.html');
+  }
+})();
+
 let uploadedPhoto = null;
 let currentMode   = 'past';
 let lastResult    = null;
