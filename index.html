@@ -128,6 +128,15 @@ select option{background:#1a1008;}
 .chart-container { margin: 30px 0; background: rgba(255,255,255,0.02); padding: 20px; border-radius: 4px; border: 1px solid rgba(201,150,58,0.1); }
 .chart-title { font-size: 13px; color: var(--gold); margin-bottom: 20px; text-align: center; letter-spacing: 2px; }
 
+/* === Payment / Blur Gating === */
+.blur-text{filter:blur(4.5px);user-select:none;pointer-events:none;transition:filter .5s;}
+.lock-overlay-abs{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(13,10,5,.45);z-index:2;}
+.btn-payment{display:block;width:100%;padding:16px;background:linear-gradient(135deg,#b8832a 0%,#e8c96a 50%,#b8832a 100%);border:none;color:#0d0a05;font-family:'Nanum Myeongjo',serif;font-size:16px;font-weight:700;letter-spacing:3px;cursor:pointer;border-radius:2px;margin:24px 0;box-shadow:0 4px 20px rgba(201,150,58,.35);transition:all .3s;position:relative;z-index:3;}
+.btn-payment:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(201,150,58,.5);}
+.btn-payment:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.unlock-badge{text-align:center;padding:12px 16px;color:var(--gold-light);font-size:12px;letter-spacing:3px;border:1px solid rgba(201,150,58,.4);background:rgba(201,150,58,.06);margin-bottom:20px;}
+.compat-bar-bg{height:8px;background:rgba(255,255,255,.08);border-radius:4px;margin:8px 0;overflow:hidden;}
+.compat-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width 1.2s ease;}
 #printArea{display:none;}
 
 @media print {
@@ -338,6 +347,8 @@ select option{background:#1a1008;}
         <div id="todayChart"></div>
       </div>
 
+      <div id="todayDetailBlocks"></div>
+
       <div id="todayCautions"></div>
 
       <div class="mentor-card">
@@ -417,6 +428,7 @@ select option{background:#1a1008;}
 let uploadedPhoto = null;
 let currentMode   = 'past';
 let lastResult    = null;
+const unlockedModes = {}; // {past:true, spouse:true, face:true}
 
 // 별
 (function(){
@@ -594,32 +606,37 @@ async function startReveal(){
 
 function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
   let photoNote=uploadedPhoto?'첨부된 사진을 참고하여 인물의 외모적 특징을 분석에 반영하세요.':'사진 없이 사주 정보만으로 분석하세요.';
-  if (mode === 'face') {
-    photoNote = '첨부된 사진 속 인물은 실제 사람이 아닌 가상의 캐릭터입니다. 이 캐릭터의 얼굴을 관상학적으로 분석해주세요.';
+  if(mode==='face'){
+    photoNote='첨부된 사진 속 인물은 실제 사람이 아닌 가상의 캐릭터입니다. 이 캐릭터의 얼굴을 관상학적으로 분석해주세요.';
   }
 
   let jsonTemplate, modeInstruction;
 
-  if (mode === 'past') {
-    jsonTemplate = `{"era":"","role":"","lifeStory":"","relationships":"","death":"","karma":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
-    modeInstruction = `
-분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
+  if(mode==='past'){
+    jsonTemplate=`{"era":"","dynasty":"","role":"","socialClass":"","lifeStory":"","relationships":"","death":"","karma":"","talent":"","tragedy":"","legacy":"","pastLifeColor":"","reincarnationSign":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 
 분석: 이 사람의 전생
-- era: 전생의 시대 (예: 조선 중기, 고려 말 등)
-- role: 전생의 신분/직업
+- era: 전생의 시대 (예: 조선 중기, 고려 말, 신라 통일기 등)
+- dynasty: 왕조/국가명 (예: 조선, 고려, 신라, 발해, 고구려, 가야, 일제강점기 등)
+- role: 전생의 신분/직업 (구체적으로)
+- socialClass: 계급 상세 (양반/중인/평민/천민 중 하나 + 구체적 설명)
 - lifeStory: 유년기부터 중년까지 인생 흐름 서술 150자 (기쁨과 고난을 균형 있게 포함하여 사실적으로)
 - relationships: 전생의 핵심 인연(은인/원수/사랑 등) 100자
 - death: 어떤 죽음을 맞았는지, 마지막 감정 80자 (담담하고 중립적으로 서술)
 - karma: 전생에서 현생으로 이어진 업보 80자 (현생에 미치는 영향을 긍정·부정 균형 있게 언급)
-- description: 전생 삶에 대한 시적이고 신비로운 서술 200자 내외.
-- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 150자 내외 (업보의 긍정적 측면과 주의할 점을 균형 있게).
+- talent: 전생의 특별한 재능이나 능력 50자
+- tragedy: 전생의 가장 큰 시련이나 비극 80자
+- legacy: 후세에 남긴 흔적이나 영향 50자
+- pastLifeColor: 전생을 상징하는 색깔과 그 이유 50자
+- reincarnationSign: 현생에서 전생의 기억이 깨어나는 순간들 80자 (데자뷰, 특정 감각, 반복되는 꿈 등 구체적으로)
+- description: 전생 삶에 대한 시적이고 신비로운 서술 200자 내외
+- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 150자 내외 (업보의 긍정적 측면과 주의할 점을 균형 있게)
 - keywords: 전생을 상징하는 키워드 4개
-- imagePrompt: 영문 이미지 프롬프트. "${gender==='남성'?'Male':'Female'} figure in [era] Korean historical setting, [role], dramatic lighting, ink wash painting style, mysterious atmosphere, 8k"`;
-  } else if (mode === 'face') {
-    jsonTemplate = `{"category":"","faceType":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
-    modeInstruction = `
-분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
+- imagePrompt: 영문 이미지 프롬프트. "Dramatic cinematic portrait: ${gender==='남성'?'male':'female'} figure in [dynasty] Korean historical [era] setting, [role] of [socialClass] class. Authentic period-accurate costume with intricate embroidery. Evokes [talent/key life scene]. Chiaroscuro lighting — warm torch-glow rim light piercing dense shadow. Masterful fusion of Korean ink wash painting and hyperrealistic oil portrait. Gold dust drifting in misty air. Haunting, soulful gaze. Award-winning historical illustration, cinematic composition, 8K ultra detail."`;
+  }else if(mode==='face'){
+    jsonTemplate=`{"category":"","faceType":"","eyeReading":"","noseReading":"","mouthReading":"","earsReading":"","overallAura":"","luckyBodyPart":"","careerBest":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 
 [사주 참고 정보]
 - 이름: ${name}
@@ -628,24 +645,37 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 
 분석 항목:
 - category: 관상 유형 (예: 목형(木形) · 귀인상)
-- faceType: 이목구비 특징 한 줄 요약
+- faceType: 이목구비 전체 특징 한 줄 요약
+- eyeReading: 눈 관상 상세 분석 80자 (눈빛·눈 크기·눈꼬리·운세에 미치는 영향)
+- noseReading: 코 관상 상세 분석 80자 (코 높이·코끝·콧방울·재물운 연관)
+- mouthReading: 입 관상 상세 분석 80자 (입술 두께·입꼬리·언변운)
+- earsReading: 귀 관상 상세 분석 80자 (귀 크기·귀 모양·수복운 연관)
+- overallAura: 전체적인 기운과 아우라 80자
+- luckyBodyPart: 가장 길한 신체 부위와 그 이유 50자
+- careerBest: 가장 잘 맞는 직업 Top 3 (각각 한 문장 이유 포함)
 - lifeFlow: 청년기/중년기/말년기 인생 흐름 150자
 - personality: 성격 강점과 보완할 점, 대인관계 특성 100자
 - wealth: 재물운·직업운 80자
 - love: 연애·결혼운 80자
 - caution: 이 관상에서 읽히는 주의할 점과 발전 방향 80자
 - description: 이 캐릭터의 관상에 대한 신비롭고 시적인 서술 200자 내외. 이목구비별 특징, 성격, 운세 흐름 포함.
-- fortuneTellerComment: 점술가가 직접("당신의 얼굴에는...") 말하듯 핵심 관상 조언 150자 내외 (강점과 주의할 점을 균형 있게).
+- fortuneTellerComment: 점술가가 직접("당신의 얼굴에는...") 말하듯 핵심 관상 조언 150자 내외 (강점과 주의할 점을 균형 있게)
 - keywords: 이 관상을 상징하는 키워드 4개
-- imagePrompt: 이 캐릭터의 관상적 특징을 극적으로 표현한 영문 초상화 프롬프트. face reading portrait, [특징], dramatic lighting, traditional Korean fortune teller aesthetic, mystical atmosphere, 8k`;
-  } else if (mode === 'today') {
-    const todayStr = new Date().toLocaleDateString('ko-KR');
-    jsonTemplate = `{"dayFlow":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","naeryeok":"","successQuote":"","fortuneTellerComment":""}`;
-    modeInstruction = `
-분석: 오늘의 운세 (기준 날짜: ${todayStr})
+- imagePrompt: 영문 이미지 프롬프트. "Mystical face reading portrait of a ${gender==='남성'?'male':'female'}, [overallAura] energy radiating. [category] physiognomy type. Dramatic chiaroscuro lighting — golden spotlight on face, deep shadow background. Ancient Korean divination symbols and zodiac signs subtly glowing in the backdrop. Penetrating, soulful gaze. Fusion of traditional fortune teller aesthetic and contemporary fine art photography. Ultra-detailed 8K, award-winning portrait."`;
+  }else if(mode==='today'){
+    const todayStr=new Date().toLocaleDateString('ko-KR');
+    jsonTemplate=`{"dayFlow":"","morningRitual":"","avoidAction":"","luckyFood":"","luckyPerson":"","moneyLuck":"","loveLuck":"","healthLuck":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","naeryeok":"","successQuote":"","fortuneTellerComment":""}`;
+    modeInstruction=`분석: 오늘의 운세 (기준 날짜: ${todayStr})
 시스템 톤: 명리학에 근거한 중립적이고 객관적인 멘토. 긍정적 기운과 주의할 기운을 균형 있게 분석. 현실적 조언 중심.
 
 - dayFlow: 오늘 하루 전체적인 기운 흐름 (2~3문장, 길한 기운과 흉한 기운을 균형 있게)
+- morningRitual: 오늘 아침 반드시 해야 할 구체적 행동 1가지 (예: "동쪽 창문을 열고 햇빛 5분 쐬기") 50자
+- avoidAction: 오늘 절대 피해야 할 행동과 그 이유 50자
+- luckyFood: 오늘의 행운 음식과 기운적 효과 30자
+- luckyPerson: 오늘 함께하면 좋은 사람 유형 50자
+- moneyLuck: 재물운 상세 분석 100자 (투자·지출·수입 관련 구체적 조언)
+- loveLuck: 연애운 상세 분석 100자 (현재 관계 또는 새 인연 관련 구체적 조언)
+- healthLuck: 건강운 상세 분석 100자 (주의할 신체 부위, 오늘 권장 활동)
 - luckyElements: 행운 요소 5개 (색상, 방향, 음식, 시간대, 행운의 말)
 - cautions: 주의 항목 3개 (제목+설명)
 - hourlyFlow: 06시부터 22시까지 2시간 간격 9개 데이터 (score는 0~100)
@@ -653,23 +683,29 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - naeryeok: 이 사람의 사주 천간·지지·오행을 바탕으로 오늘의 기운을 명리학적으로 해석 (2~3문장. 용신·희신·기신 등 구체적 명리 용어 포함.)
 - successQuote: 오늘의 사주 기운과 어울리는 동서양 성공 격언 또는 명언 1개 (한국어로, 출처·인물명 포함)
 - fortuneTellerComment: 점술가 스타일의 마무리 한 줄`;
-  } else {
-    jsonTemplate = `{"firstMeeting":"","appearance":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
-    modeInstruction = `
-분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
+  }else{
+    jsonTemplate=`{"firstMeeting":"","appearance":"","height":"","voice":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","hobby":"","firstGift":"","meetingSeason":"","weddingStyle":"","compatibilityScore":0,"description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 
 분석: 이 사람의 미래 배우자
 - firstMeeting: 처음 만나는 상황과 장소
-- appearance: 배우자 외모 묘사
+- appearance: 배우자 외모 묘사 100자 (이목구비·분위기·인상 포함)
+- height: 키와 체형 묘사 30자
+- voice: 목소리 특징 50자
 - celebrity: 닮은 한국 연예인 1~2명
 - animalFace: 동물 관상 (예: 여우상) + 한 문장 이유
 - job: 추측 직업군 2~3가지 + 이유
 - signs: 만나기 전 나타나는 징조 2~3가지 (길한 신호와 준비할 사항 균형 있게)
 - personality: 배우자 성격 특징 (강점과 보완할 점 모두)
+- hobby: 취미와 관심사 3가지 (각 한 문장 설명)
+- firstGift: 처음 받을 선물과 그 의미 50자
+- meetingSeason: 만나는 계절과 날씨 묘사 50자
+- weddingStyle: 예상 결혼 스타일 50자
+- compatibilityScore: 이 사람과의 사주 궁합 점수 (0~100 정수)
 - description: 미래 배우자에 대한 신비로운 서술 200자 내외. (긍정적 면모와 함께할 때 주의할 점을 균형 있게 포함하여 사실적으로)
-- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 150자 내외 (인연의 아름다움과 함께 성숙한 관계를 위한 조언 균형 있게).
+- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 150자 내외 (인연의 아름다움과 함께 성숙한 관계를 위한 조언 균형 있게)
 - keywords: 이 인연을 상징하는 키워드 4개
-- imagePrompt: 영문 이미지 프롬프트. "Portrait of a ${gender==='남성'?'beautiful Korean woman':'handsome Korean man'}, [appearance], soft warm lighting, photorealistic, romantic atmosphere, 8k"`;
+- imagePrompt: 영문 이미지 프롬프트. "Romantic cinematic portrait of a ${gender==='남성'?'beautiful Korean woman':'handsome Korean man'}, [appearance detail], [height/build]. [celebrity]-esque aura. [meetingSeason] golden hour light, soft bokeh background evoking [meeting place]. Warm, approachable expression — genuine smile with a hint of mystery. Editorial fashion photography meets fine art portrait. Ultra-detailed 8K, award-winning photography, dreamy romantic atmosphere."`;
   }
 
   return `당신은 한국의 사주명리학 전문가이자 신비로운 점술가입니다.
@@ -686,156 +722,260 @@ ${modeInstruction}
 ${jsonTemplate}`;
 }
 
+// HTML escape helper
+function esc(s){if(!s&&s!==0)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 function displayResult(data,imgUrl,mode){
+  if(lastResult)lastResult.imgUrl=imgUrl;
   document.getElementById('pastLifeCard').style.display='none';
   document.getElementById('spouseCard').style.display='none';
-  if(document.getElementById('faceCard')) document.getElementById('faceCard').style.display='none';
-  if(document.getElementById('todayCard')) document.getElementById('todayCard').style.display='none';
-
-  if(mode==='past'){
-    document.getElementById('pastLifeCard').style.display='block';
-    document.getElementById('pastLifeMeta').textContent=`${data.era} · ${data.role}`;
-    document.getElementById('pastLifeDesc').textContent=data.description;
-    document.getElementById('pastLifeBlocks').innerHTML=`
-      <div class="info-blocks">
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 흐르던 생의 기록</div><div class="info-block-text">${data.lifeStory||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 얽매인 전생의 인연</div><div class="info-block-text">${data.relationships||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 생의 마감과 마지막 감정</div><div class="info-block-text">${data.death||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 현생으로 이어진 업보</div><div class="info-block-text">${data.karma||''}</div></div>
-      </div>
-    `;
-    document.getElementById('pastLifeFortune').textContent=data.fortuneTellerComment;
-    renderTags('pastLifeTags',data.keywords);
-    renderImg('pastLifeImg','pastLifeImgPh',imgUrl);
-  }else if(mode==='face'){
-    document.getElementById('faceCard').style.display='block';
-    document.getElementById('faceMeta').textContent=data.category;
-    document.getElementById('faceDesc').textContent=data.description;
-    document.getElementById('faceBlocks').innerHTML=`
-      <div class="info-blocks">
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 이목구비 특징</div><div class="info-block-text">${data.faceType||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 인생의 큰 흐름</div><div class="info-block-text">${data.lifeFlow||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 내면의 성향 (강점과 약점)</div><div class="info-block-text">${data.personality||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 재물 및 직업운</div><div class="info-block-text">${data.wealth||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 애정 및 결혼운</div><div class="info-block-text">${data.love||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 삶의 주의점</div><div class="info-block-text">${data.caution||''}</div></div>
-      </div>
-    `;
-    document.getElementById('faceFortune').textContent=data.fortuneTellerComment;
-    renderTags('faceTags',data.keywords);
-    renderImg('faceImg','faceImgPh',imgUrl);
-  }else if(mode==='today'){
-    renderToday(data);
-  }else{
-    document.getElementById('spouseCard').style.display='block';
-    document.getElementById('spouseMeta').textContent=`첫 만남 · ${data.firstMeeting}`;
-    document.getElementById('spouseDesc').textContent=data.description;
-    document.getElementById('spouseBlocks').innerHTML=`
-      <div class="info-blocks">
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 닮은꼴 연예인</div><div class="info-block-text">${data.celebrity||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 동물 관상</div><div class="info-block-text">${data.animalFace||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 예상 직업군</div><div class="info-block-text">${data.job||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 만나기 전의 징조</div><div class="info-block-text">${data.signs||''}</div></div>
-      </div>
-    `;
-    document.getElementById('spouseFortune').textContent=data.fortuneTellerComment;
-    renderTags('spouseTags',data.keywords);
-    renderImg('spouseImg','spouseImgPh',imgUrl);
-  }
+  if(document.getElementById('faceCard'))document.getElementById('faceCard').style.display='none';
+  if(document.getElementById('todayCard'))document.getElementById('todayCard').style.display='none';
+  const unlocked=!!unlockedModes[mode];
+  if(mode==='past')renderPastResult(data,imgUrl,unlocked);
+  else if(mode==='face')renderFaceResult(data,imgUrl,unlocked);
+  else if(mode==='today')renderToday(data);
+  else renderSpouseResult(data,imgUrl,unlocked);
   document.getElementById('resultSection').classList.add('show');
   setTimeout(()=>document.getElementById('resultSection').scrollIntoView({behavior:'smooth',block:'start'}),300);
 }
 
+function renderPastResult(data,imgUrl,unlocked){
+  const card=document.getElementById('pastLifeCard');
+  card.style.display='block';
+  const tags3=(data.keywords||[]).slice(0,3).map(k=>`<span class="tag">${esc(k)}</span>`).join('');
+  const tagsAll=(data.keywords||[]).map(k=>`<span class="tag">${esc(k)}</span>`).join('');
+  const imgSrc=imgUrl||``;
+  const imgEl=imgUrl?`<img id="pastLifeImg" src="${imgSrc}" alt="전생의 모습" style="width:100%;display:block;${unlocked?'':'filter:blur(20px) brightness(.7);'}">`:`<div id="pastLifeImg" style="display:none;"></div>`;
+  const lockEl=unlocked?'':`<div class="lock-overlay-abs"><span style="font-size:30px;">🔒</span><span style="font-size:11px;color:var(--gold);letter-spacing:2px;">결제 후 열람</span></div>`;
+  const blocks=`
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 흐르던 생의 기록</div><div class="info-block-text">${esc(data.lifeStory||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 얽매인 전생의 인연</div><div class="info-block-text">${esc(data.relationships||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 생의 마감과 마지막 감정</div><div class="info-block-text">${esc(data.death||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 현생으로 이어진 업보</div><div class="info-block-text">${esc(data.karma||'')}</div></div>
+    ${data.talent?`<div class="info-block"><div class="info-block-title"><i>✦</i> 전생의 재능</div><div class="info-block-text">${esc(data.talent)}</div></div>`:''}
+    ${data.tragedy?`<div class="info-block"><div class="info-block-title"><i>✦</i> 가장 큰 시련과 비극</div><div class="info-block-text">${esc(data.tragedy)}</div></div>`:''}
+    ${data.legacy?`<div class="info-block"><div class="info-block-title"><i>✦</i> 후세에 남긴 흔적</div><div class="info-block-text">${esc(data.legacy)}</div></div>`:''}
+    ${data.pastLifeColor?`<div class="info-block"><div class="info-block-title"><i>✦</i> 전생을 상징하는 색</div><div class="info-block-text">${esc(data.pastLifeColor)}</div></div>`:''}
+    ${data.reincarnationSign?`<div class="info-block"><div class="info-block-title"><i>✦</i> 전생이 깨어나는 순간</div><div class="info-block-text">${esc(data.reincarnationSign)}</div></div>`:''}
+  `;
+  card.innerHTML=`
+    <div class="result-card-title">전생 모습 보기<small>PAST LIFE VISION</small></div>
+    <div class="result-desc">${esc(data.description)}</div>
+    <div class="fortune-comment"><div class="fortune-label">✦ 점술가의 말</div><div class="fortune-text">${esc(data.fortuneTellerComment)}</div></div>
+    <div class="result-tags">${tags3}</div>
+    ${unlocked?'<div class="unlock-badge">✦ 전체 결과 열람 완료</div>':''}
+    <div class="image-frame" style="position:relative;">${imgEl}<div class="image-placeholder" id="pastLifeImgPh" style="${imgUrl?'display:none;':''}">전생의 기억을 불러오는 중...</div>${lockEl}</div>
+    <div${unlocked?'':' class="blur-text"'}>
+      <div class="result-meta">${esc(data.era)}${data.dynasty?' · '+esc(data.dynasty):''} · ${esc(data.role)}${data.socialClass?' ('+esc(data.socialClass)+')':''}</div>
+      <div class="info-blocks">${blocks}</div>
+      ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
+    </div>
+    ${unlocked?'':`<button class="btn-payment" onclick="doPayment('past')">🔮 전체 결과 보기 · ₩1,500</button>`}
+  `;
+}
+
+function renderSpouseResult(data,imgUrl,unlocked){
+  const card=document.getElementById('spouseCard');
+  card.style.display='block';
+  const tags3=(data.keywords||[]).slice(0,3).map(k=>`<span class="tag">${esc(k)}</span>`).join('');
+  const tagsAll=(data.keywords||[]).map(k=>`<span class="tag">${esc(k)}</span>`).join('');
+  const imgEl=imgUrl?`<img id="spouseImg" src="${imgUrl}" alt="미래의 배우자" style="width:100%;display:block;${unlocked?'':'filter:blur(20px) brightness(.7);'}">`:`<div id="spouseImg" style="display:none;"></div>`;
+  const lockEl=unlocked?'':`<div class="lock-overlay-abs"><span style="font-size:30px;">🔒</span><span style="font-size:11px;color:var(--gold);letter-spacing:2px;">결제 후 열람</span></div>`;
+  const score=data.compatibilityScore||0;
+  const blocks=`
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 외모 묘사</div><div class="info-block-text">${esc(data.appearance||'')}</div></div>
+    ${data.height||`data.voice`?`<div class="info-block"><div class="info-block-title"><i>✦</i> 키·체형 · 목소리</div><div class="info-block-text">${esc(data.height||'')}${data.voice?' | '+esc(data.voice):''}</div></div>`:''}
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 닮은꼴 연예인</div><div class="info-block-text">${esc(data.celebrity||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 동물 관상</div><div class="info-block-text">${esc(data.animalFace||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 예상 직업군</div><div class="info-block-text">${esc(data.job||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 만나기 전의 징조</div><div class="info-block-text">${esc(data.signs||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 성격 특징</div><div class="info-block-text">${esc(data.personality||'')}</div></div>
+    ${data.hobby?`<div class="info-block"><div class="info-block-title"><i>✦</i> 취미와 관심사</div><div class="info-block-text">${esc(data.hobby)}</div></div>`:''}
+    ${data.firstGift?`<div class="info-block"><div class="info-block-title"><i>✦</i> 처음 받을 선물</div><div class="info-block-text">${esc(data.firstGift)}</div></div>`:''}
+    ${data.meetingSeason?`<div class="info-block"><div class="info-block-title"><i>✦</i> 만나는 계절과 날씨</div><div class="info-block-text">${esc(data.meetingSeason)}</div></div>`:''}
+    ${data.weddingStyle?`<div class="info-block"><div class="info-block-title"><i>✦</i> 예상 결혼 스타일</div><div class="info-block-text">${esc(data.weddingStyle)}</div></div>`:''}
+    ${score>0?`<div class="info-block"><div class="info-block-title"><i>✦</i> 사주 궁합 점수</div><div class="info-block-text"><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;font-weight:700;color:var(--gold);">${score}</span><span style="font-size:12px;color:var(--mist);">/ 100</span></div><div class="compat-bar-bg"><div class="compat-bar" style="width:${score}%;"></div></div></div></div>`:''}
+  `;
+  card.innerHTML=`
+    <div class="result-card-title">미래 배우자<small>DESTINED PARTNER</small></div>
+    <div class="result-desc">${esc(data.description)}</div>
+    <div class="fortune-comment"><div class="fortune-label">✦ 점술가의 말</div><div class="fortune-text">${esc(data.fortuneTellerComment)}</div></div>
+    <div class="result-tags">${tags3}</div>
+    ${unlocked?'<div class="unlock-badge">✦ 전체 결과 열람 완료</div>':''}
+    <div class="image-frame" style="position:relative;">${imgEl}<div class="image-placeholder" id="spouseImgPh" style="${imgUrl?'display:none;':''}">운명의 인연을 불러오는 중...</div>${lockEl}</div>
+    <div${unlocked?'':' class="blur-text"'}>
+      <div class="result-meta">첫 만남 · ${esc(data.firstMeeting)}</div>
+      <div class="info-blocks">${blocks}</div>
+      ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
+    </div>
+    ${unlocked?'':`<button class="btn-payment" onclick="doPayment('spouse')">🔮 전체 결과 보기 · ₩1,500</button>`}
+  `;
+}
+
+function renderFaceResult(data,imgUrl,unlocked){
+  const card=document.getElementById('faceCard');
+  card.style.display='block';
+  const tags3=(data.keywords||[]).slice(0,3).map(k=>`<span class="tag">${esc(k)}</span>`).join('');
+  const tagsAll=(data.keywords||[]).map(k=>`<span class="tag">${esc(k)}</span>`).join('');
+  const imgEl=imgUrl?`<img id="faceImg" src="${imgUrl}" alt="관상 이미지" style="width:100%;display:block;${unlocked?'':'filter:blur(20px) brightness(.7);'}">`:`<div id="faceImg" style="display:none;"></div>`;
+  const lockEl=unlocked?'':`<div class="lock-overlay-abs"><span style="font-size:30px;">🔒</span><span style="font-size:11px;color:var(--gold);letter-spacing:2px;">결제 후 열람</span></div>`;
+  const blocks=`
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 이목구비 특징</div><div class="info-block-text">${esc(data.faceType||'')}</div></div>
+    ${data.eyeReading?`<div class="info-block"><div class="info-block-title"><i>✦</i> 눈 관상</div><div class="info-block-text">${esc(data.eyeReading)}</div></div>`:''}
+    ${data.noseReading?`<div class="info-block"><div class="info-block-title"><i>✦</i> 코 관상</div><div class="info-block-text">${esc(data.noseReading)}</div></div>`:''}
+    ${data.mouthReading?`<div class="info-block"><div class="info-block-title"><i>✦</i> 입 관상</div><div class="info-block-text">${esc(data.mouthReading)}</div></div>`:''}
+    ${data.earsReading?`<div class="info-block"><div class="info-block-title"><i>✦</i> 귀 관상</div><div class="info-block-text">${esc(data.earsReading)}</div></div>`:''}
+    ${data.overallAura?`<div class="info-block"><div class="info-block-title"><i>✦</i> 전체 기운과 아우라</div><div class="info-block-text">${esc(data.overallAura)}</div></div>`:''}
+    ${data.luckyBodyPart?`<div class="info-block"><div class="info-block-title"><i>✦</i> 가장 길한 신체 부위</div><div class="info-block-text">${esc(data.luckyBodyPart)}</div></div>`:''}
+    ${data.careerBest?`<div class="info-block"><div class="info-block-title"><i>✦</i> 가장 잘 맞는 직업 Top 3</div><div class="info-block-text">${esc(data.careerBest)}</div></div>`:''}
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 인생의 큰 흐름</div><div class="info-block-text">${esc(data.lifeFlow||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 내면의 성향 (강점과 약점)</div><div class="info-block-text">${esc(data.personality||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 재물 및 직업운</div><div class="info-block-text">${esc(data.wealth||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 애정 및 결혼운</div><div class="info-block-text">${esc(data.love||'')}</div></div>
+    <div class="info-block"><div class="info-block-title"><i>✦</i> 삶의 주의점</div><div class="info-block-text">${esc(data.caution||'')}</div></div>
+  `;
+  card.innerHTML=`
+    <div class="result-card-title">관상 보기<small>FACE READING</small></div>
+    <div class="result-desc">${esc(data.description)}</div>
+    <div class="fortune-comment"><div class="fortune-label">✦ 점술가의 말</div><div class="fortune-text">${esc(data.fortuneTellerComment)}</div></div>
+    <div class="result-tags">${tags3}</div>
+    ${unlocked?'<div class="unlock-badge">✦ 전체 결과 열람 완료</div>':''}
+    <div class="image-frame" style="position:relative;">${imgEl}<div class="image-placeholder" id="faceImgPh" style="${imgUrl?'display:none;':''}">관상을 읽는 중...</div>${lockEl}</div>
+    <div${unlocked?'':' class="blur-text"'}>
+      <div class="result-meta">${esc(data.category)}</div>
+      <div class="info-blocks">${blocks}</div>
+      ${unlocked?`<div class="result-tags">${tagsAll}</div>`:''}
+    </div>
+    ${unlocked?'':`<button class="btn-payment" onclick="doPayment('face')">🔮 전체 결과 보기 · ₩1,500</button>`}
+  `;
+}
+
 function renderImg(imgId,phId,url){
   const img=document.getElementById(imgId),ph=document.getElementById(phId);
-  if(url){img.src=url;img.style.display='block';ph.style.display='none';}
-  else{ph.textContent='이미지를 불러올 수 없습니다';}
+  if(img&&url){img.src=url;img.style.display='block';if(ph)ph.style.display='none';}
+  else if(ph){ph.textContent='이미지를 불러올 수 없습니다';}
 }
 function renderTags(elId,keywords){
   if(!keywords?.length)return;
-  document.getElementById(elId).innerHTML=keywords.map(k=>`<span class="tag">${k}</span>`).join('');
+  const el=document.getElementById(elId);
+  if(el)el.innerHTML=keywords.map(k=>`<span class="tag">${esc(k)}</span>`).join('');
 }
 
-function renderToday(data) {
-  const card = document.getElementById('todayCard');
-  card.style.display = 'block';
-  
-  document.getElementById('todayMeta').textContent = `오늘의 운세 · ${new Date().toLocaleDateString()}`;
-  document.getElementById('todayFlow').textContent = data.dayFlow;
-  
-  // Lucky Elements
-  const luckyGrid = document.getElementById('todayLuckyElements');
-  luckyGrid.innerHTML = (data.luckyElements || []).map(el => `
+function renderToday(data){
+  const card=document.getElementById('todayCard');
+  card.style.display='block';
+
+  document.getElementById('todayMeta').textContent=`오늘의 운세 · ${new Date().toLocaleDateString()}`;
+  document.getElementById('todayFlow').textContent=data.dayFlow;
+
+  const luckyGrid=document.getElementById('todayLuckyElements');
+  luckyGrid.innerHTML=(data.luckyElements||[]).map(el=>`
     <div class="info-block">
-      <div class="info-block-title"><i>✦</i> ${el.category}</div>
-      <div class="info-block-text">${el.value}</div>
+      <div class="info-block-title"><i>✦</i> ${esc(el.category)}</div>
+      <div class="info-block-text">${esc(el.value)}</div>
     </div>
   `).join('');
-  
-  // Chart
-  const chartEl = document.getElementById('todayChart');
-  const hFlow = data.hourlyFlow || [];
-  const maxH = 100;
-  const svgW = 100, svgH = 60;
-  const barW = svgW / hFlow.length - 2;
-  
-  let bars = hFlow.map((d, i) => {
-    const x = i * (svgW / hFlow.length) + 1;
-    const barHeight = (d.score / maxH) * (svgH - 15);
-    const y = svgH - 5 - barHeight;
-    let color = 'rgba(139,26,26,.5)'; // low
-    if (d.score >= 70) color = 'var(--gold)';
-    else if (d.score >= 50) color = 'rgba(201,150,58,.45)';
-    
-    return `
-      <rect x="${x}" y="${y}" width="${barW}" height="${barHeight}" fill="${color}" rx="0.5" />
-      <text x="${x + barW/2}" y="${y - 2}" text-anchor="middle" font-size="2.5" fill="var(--gold)" style="font-family:sans-serif;">${d.label}</text>
-      <text x="${x + barW/2}" y="${svgH - 1}" text-anchor="middle" font-size="2.5" fill="var(--mist)" style="font-family:sans-serif;">${d.hour}</text>
-    `;
+
+  const chartEl=document.getElementById('todayChart');
+  const hFlow=data.hourlyFlow||[];
+  const svgW=100,svgH=60,maxH=100;
+  const barW=svgW/hFlow.length-2;
+  const bars=hFlow.map((d,i)=>{
+    const x=i*(svgW/hFlow.length)+1;
+    const bh=(d.score/maxH)*(svgH-15);
+    const y=svgH-5-bh;
+    let color='rgba(139,26,26,.5)';
+    if(d.score>=70)color='var(--gold)';
+    else if(d.score>=50)color='rgba(201,150,58,.45)';
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="${color}" rx="0.5"/><text x="${x+barW/2}" y="${y-2}" text-anchor="middle" font-size="2.5" fill="var(--gold)" style="font-family:sans-serif;">${esc(d.label)}</text><text x="${x+barW/2}" y="${svgH-1}" text-anchor="middle" font-size="2.5" fill="var(--mist)" style="font-family:sans-serif;">${esc(d.hour)}</text>`;
   }).join('');
+  chartEl.innerHTML=`<svg viewBox="0 0 ${svgW} ${svgH}" width="100%">${bars}</svg>`;
 
-  chartEl.innerHTML = `<svg viewBox="0 0 ${svgW} ${svgH}" width="100%">${bars}</svg>`;
-
-  // Cautions
-  const cautionEl = document.getElementById('todayCautions');
-  cautionEl.innerHTML = (data.cautions || []).map(c => `
+  const cautionEl=document.getElementById('todayCautions');
+  cautionEl.innerHTML=(data.cautions||[]).map(c=>`
     <div class="caution-card">
-      <div class="caution-title">✦ ${c.title}</div>
-      <div class="caution-desc">${c.desc}</div>
+      <div class="caution-title">✦ ${esc(c.title)}</div>
+      <div class="caution-desc">${esc(c.desc)}</div>
     </div>
   `).join('');
-  
-  document.getElementById('todayMentorAdvice').textContent = data.mentorAdvice;
 
-  // 명리학적 해석
-  const naeryeokBlock = document.getElementById('todayNaeryeokBlock');
-  const naeryeokEl = document.getElementById('todayNaeryeok');
-  if (data.naeryeok) {
-    naeryeokEl.textContent = data.naeryeok;
-    naeryeokBlock.style.display = 'block';
-  } else {
-    naeryeokBlock.style.display = 'none';
+  // New detail blocks (morningRitual, avoidAction, etc.)
+  const detailEl=document.getElementById('todayDetailBlocks');
+  if(detailEl){
+    const rows=[
+      data.morningRitual&&`<div class="info-block"><div class="info-block-title"><i>✦</i> 오늘 아침 할 일</div><div class="info-block-text">${esc(data.morningRitual)}</div></div>`,
+      data.avoidAction&&`<div class="info-block"><div class="info-block-title"><i>✦</i> 피해야 할 행동</div><div class="info-block-text">${esc(data.avoidAction)}</div></div>`,
+      data.luckyFood&&`<div class="info-block"><div class="info-block-title"><i>✦</i> 오늘의 행운 음식</div><div class="info-block-text">${esc(data.luckyFood)}</div></div>`,
+      data.luckyPerson&&`<div class="info-block"><div class="info-block-title"><i>✦</i> 함께하면 좋은 사람</div><div class="info-block-text">${esc(data.luckyPerson)}</div></div>`,
+      data.moneyLuck&&`<div class="info-block"><div class="info-block-title"><i>✦</i> 재물운</div><div class="info-block-text">${esc(data.moneyLuck)}</div></div>`,
+      data.loveLuck&&`<div class="info-block"><div class="info-block-title"><i>✦</i> 연애운</div><div class="info-block-text">${esc(data.loveLuck)}</div></div>`,
+      data.healthLuck&&`<div class="info-block"><div class="info-block-title"><i>✦</i> 건강운</div><div class="info-block-text">${esc(data.healthLuck)}</div></div>`,
+    ].filter(Boolean).join('');
+    detailEl.innerHTML=`<div class="info-blocks">${rows}</div>`;
   }
 
-  // 성공 격언
-  const successQuoteBlock = document.getElementById('todaySuccessQuoteBlock');
-  const successQuoteEl = document.getElementById('todaySuccessQuote');
-  if (data.successQuote) {
-    successQuoteEl.textContent = data.successQuote;
-    successQuoteBlock.style.display = 'block';
-  } else {
-    successQuoteBlock.style.display = 'none';
-  }
+  document.getElementById('todayMentorAdvice').textContent=data.mentorAdvice;
 
-  document.getElementById('todayFortune').textContent = data.fortuneTellerComment;
+  const naBlock=document.getElementById('todayNaeryeokBlock');
+  const naEl=document.getElementById('todayNaeryeok');
+  if(data.naeryeok){naEl.textContent=data.naeryeok;naBlock.style.display='block';}
+  else naBlock.style.display='none';
+
+  const sqBlock=document.getElementById('todaySuccessQuoteBlock');
+  const sqEl=document.getElementById('todaySuccessQuote');
+  if(data.successQuote){sqEl.textContent=data.successQuote;sqBlock.style.display='block';}
+  else sqBlock.style.display='none';
+
+  document.getElementById('todayFortune').textContent=data.fortuneTellerComment;
 }
+
+// ── Payment ──────────────────────────────────────────────────────────────────
+async function doPayment(mode){
+  const btns=document.querySelectorAll('.btn-payment');
+  btns.forEach(b=>{b.disabled=true;b.textContent='결제 처리 중...';});
+  try{
+    // Dev/non-Toss fallback
+    if(!window.ReactNativeWebView||!window.__GRANITE_NATIVE_EMITTER){
+      if(location.hostname==='localhost'||location.hostname==='127.0.0.1'||location.hostname===''){
+        unlockedModes[mode]=true;
+        if(lastResult)displayResult(lastResult.parsed,lastResult.imgUrl,mode);
+        return;
+      }
+      throw new Error('토스 앱에서만 결제가 가능합니다.');
+    }
+    const modeNames={past:'전생 분석 전체 결과',spouse:'미래 배우자 전체 결과',face:'관상 분석 전체 결과'};
+    const orderId=`mystic-${mode}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    const amount=1500;
+    // Native Toss bridge payment
+    const payResult=await new Promise((resolve,reject)=>{
+      const eventId=Math.random().toString(36).substring(2,15);
+      const em=window.__GRANITE_NATIVE_EMITTER;
+      const cls=[];
+      const done=()=>cls.forEach(f=>f());
+      cls.push(em.on(`requestPayment/resolve/${eventId}`,d=>{done();resolve(d);}));
+      cls.push(em.on(`requestPayment/reject/${eventId}`,e=>{done();reject(e&&e.__isError?Object.assign(new Error(e.message),e):new Error('결제가 취소되었습니다.'));}));
+      window.ReactNativeWebView.postMessage(JSON.stringify({type:'method',functionName:'requestPayment',eventId,args:[{orderId,orderName:modeNames[mode],amount,appScheme:'mystic-mirror'}]}));
+    });
+    // Server-side verify
+    const vRes=await fetch('/api/verify-payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({paymentKey:payResult.paymentKey,orderId:payResult.orderId||orderId,amount})});
+    const vData=await vRes.json();
+    if(!vData.unlocked)throw new Error(vData.error||'결제 검증에 실패했습니다.');
+    unlockedModes[mode]=true;
+    if(lastResult)displayResult(lastResult.parsed,lastResult.imgUrl,mode);
+  }catch(err){
+    document.querySelectorAll('.btn-payment').forEach(b=>{b.disabled=false;b.textContent='🔮 전체 결과 보기 · ₩1,500';});
+    if(err.message&&!err.message.includes('취소'))showError('결제 오류: '+err.message);
+  }
+}
+
 
 async function exportPDF(){
   if(!lastResult)return;
   const{parsed,name,birthDate,birthHour,gender,calType,mode}=lastResult;
   const today=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
   const imgEl=document.getElementById(mode==='past'?'pastLifeImg':(mode==='face'?'faceImg':'spouseImg'));
-  const imgShown=imgEl.style.display!=='none'&&imgEl.src;
+  const imgShown=imgEl&&imgEl.style.display!=='none'&&imgEl.src;
   const imgHtml=imgShown?`<img src="${imgEl.src}" alt="결과 이미지" crossorigin="anonymous">`:`<div class="pdf-img-placeholder">이미지를 불러올 수 없습니다</div>`;
   const tagsHtml=(parsed.keywords||[]).map(k=>`<span class="pdf-tag">${k}</span>`).join('');
 
