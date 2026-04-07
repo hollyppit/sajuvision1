@@ -83,7 +83,7 @@ export async function onRequestPost(context) {
       userInfo = await decryptAuthCode(authorizationCode, decryptKey);
     } catch (err) {
       console.error('[toss-login] 복호화 실패 상세:', err.message, err.name);
-      return json({ error: '사용자 정보 복호화 실패' }, 500);
+      return json({ error: `복호화실패[${err.name}:${err.message}] code앞30자:${authorizationCode?.slice(0,30)} keyLen:${decryptKey?.length}` }, 500);
     }
 
     // 프론트엔드에 필요한 필드만 반환
