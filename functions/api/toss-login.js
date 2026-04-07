@@ -89,13 +89,14 @@ export async function onRequestOptions() {
 export async function onRequestPost(context) {
   try {
     const { authorizationCode, referrer } = await context.request.json();
+    console.log('[toss-login] 요청 수신', { referrer, codeLen: authorizationCode?.length });
 
     if (!authorizationCode) {
       return json({ error: 'authorizationCode가 없습니다.' }, 400);
     }
 
-    // 샌드박스 환경: mock 사용자 데이터 반환
-    if (referrer === 'sandbox') {
+    // 샌드박스 환경: mock 사용자 데이터 반환 (대소문자 무관)
+    if (typeof referrer === 'string' && referrer.toLowerCase() === 'sandbox') {
       console.log('[toss-login] 샌드박스 환경 감지 → mock 데이터 반환');
       return json({
         name: '테스트유저',
