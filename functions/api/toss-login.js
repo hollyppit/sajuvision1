@@ -29,14 +29,11 @@ const CORS_HEADERS = {
  * @returns {Promise<object>}       - 복호화된 사용자 정보 JSON
  */
 async function decryptAuthCode(encryptedBase64, rawKey) {
-  // 1) UTF-8 문자열 키 → SHA-256 해시 → 32바이트 AES 키
-  const keyMaterial = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(rawKey),
-  );
+  // 1) Base64 인코딩된 키 → 32바이트 AES 키
+  const keyBytes = Uint8Array.from(atob(rawKey), c => c.charCodeAt(0));
   const aesKey = await crypto.subtle.importKey(
     'raw',
-    keyMaterial,
+    keyBytes,
     { name: 'AES-GCM' },
     false,
     ['decrypt'],
