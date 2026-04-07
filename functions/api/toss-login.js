@@ -36,32 +36,41 @@ function fromBase64(str) {
   return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
 }
 
-async function decryptAuthCode(encryptedBase64, rawKey) {
-  // 1) Base64 인코딩된 키 → 32바이트 AES 키
-  const keyBytes = fromBase64(rawKey);
+async function tryDecrypt(keyBytes, encrypted, useAad) {
   const aesKey = await crypto.subtle.importKey(
-    'raw',
-    keyBytes,
-    { name: 'AES-GCM' },
-    false,
-    ['decrypt'],
+    'raw', keyBytes, { name: 'AES-GCM' }, false, ['decrypt'],
   );
+  const iv = encrypted.slice(0, 12);
+  const cipherData = encrypted.slice(12);
+  const params = useAad
+    ? { name: 'AES-GCM', iv, additionalData: GCM_AAD, tagLength: 128 }
+    : { name: 'AES-GCM', iv, tagLength: 128 };
+  const buf = await crypto.subtle.decrypt(params, aesKey, cipherData);
+  return JSON.parse(new TextDecoder().decode(buf));
+}
 
-  // 2) Base64 → Uint8Array
+async function decryptAuthCode(encryptedBase64, rawKey) {
   const encrypted = fromBase64(encryptedBase64);
 
-  // 3) IV(12) | Ciphertext+AuthTag(16) 분리
-  const iv         = encrypted.slice(0, 12);
-  const cipherData = encrypted.slice(12);
+  // 시도 1: base64 디코딩 키 + AAD
+  try {
+    return await tryDecrypt(fromBase64(rawKey), encrypted, true);
+  } catch {}
 
-  // 4) 복호화
-  const plainBuffer = await crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv, additionalData: GCM_AAD, tagLength: 128 },
-    aesKey,
-    cipherData,
-  );
+  // 시도 2: base64 디코딩 키 + AAD 없음
+  try {
+    return await tryDecrypt(fromBase64(rawKey), encrypted, false);
+  } catch {}
 
-  return JSON.parse(new TextDecoder().decode(plainBuffer));
+  // 시도 3: SHA-256 해싱 키 + AAD
+  try {
+    const sha = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawKey));
+    return await tryDecrypt(new Uint8Array(sha), encrypted, true);
+  } catch {}
+
+  // 시도 4: SHA-256 해싱 키 + AAD 없음
+  const sha = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawKey));
+  return await tryDecrypt(new Uint8Array(sha), encrypted, false);
 }
 
 export async function onRequestOptions() {
