@@ -94,6 +94,17 @@ export async function onRequestPost(context) {
       return json({ error: 'authorizationCode가 없습니다.' }, 400);
     }
 
+    // 샌드박스 환경: mock 사용자 데이터 반환
+    if (referrer === 'sandbox') {
+      console.log('[toss-login] 샌드박스 환경 감지 → mock 데이터 반환');
+      return json({
+        name: '테스트유저',
+        birthdate: '19900101',
+        gender: 'female',
+        referrer,
+      }, 200);
+    }
+
     const decryptKey = context.env.TOSS_LOGIN_DECRYPT_KEY;
     if (!decryptKey) {
       console.error('[toss-login] 환경변수 TOSS_LOGIN_DECRYPT_KEY 누락');
@@ -103,14 +114,10 @@ export async function onRequestPost(context) {
     // authorizationCode 복호화 → 사용자 정보
     let userInfo;
     try {
-      console.log('[toss-login] authorizationCode 앞 50자:', authorizationCode?.slice(0, 50));
-      console.log('[toss-login] authorizationCode 길이:', authorizationCode?.length);
-      console.log('[toss-login] decryptKey 길이:', decryptKey?.length);
       userInfo = await decryptAuthCode(authorizationCode, decryptKey);
     } catch (err) {
-      const keyBytes = fromBase64(decryptKey);
-      const codeBytes = fromBase64(authorizationCode);
-      return json({ error: `복호화실패[${err.name}] keyBytes:${keyBytes.length} codeBytes:${codeBytes.length} iv:${codeBytes.slice(0,12)} aad:${new TextDecoder().decode(GCM_AAD)}` }, 500);
+      console.error('[toss-login] 복호화 실패', err);
+      return json({ error: '사용자 정보 복호화 실패' }, 500);
     }
 
     // 프론트엔드에 필요한 필드만 반환
