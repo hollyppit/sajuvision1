@@ -28,9 +28,17 @@ const CORS_HEADERS = {
  * @param {string} rawKey          - TOSS_LOGIN_DECRYPT_KEY 환경변수 값
  * @returns {Promise<object>}       - 복호화된 사용자 정보 JSON
  */
+function fromBase64(str) {
+  // URL-safe base64 → standard base64 정규화
+  const normalized = str.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
+  // 4의 배수로 패딩
+  const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=');
+  return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+}
+
 async function decryptAuthCode(encryptedBase64, rawKey) {
   // 1) Base64 인코딩된 키 → 32바이트 AES 키
-  const keyBytes = Uint8Array.from(atob(rawKey), c => c.charCodeAt(0));
+  const keyBytes = fromBase64(rawKey);
   const aesKey = await crypto.subtle.importKey(
     'raw',
     keyBytes,
@@ -40,7 +48,7 @@ async function decryptAuthCode(encryptedBase64, rawKey) {
   );
 
   // 2) Base64 → Uint8Array
-  const encrypted = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
+  const encrypted = fromBase64(encryptedBase64);
 
   // 3) IV(12) | Ciphertext+AuthTag(16) 분리
   const iv         = encrypted.slice(0, 12);
