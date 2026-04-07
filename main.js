@@ -204,35 +204,57 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
   let jsonTemplate, modeInstruction;
 
   if (mode === 'past') {
-    jsonTemplate = `{"era":"","role":"","lifeStory":"","relationships":"","death":"","karma":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate = `{"era":"","region":"","role":"","socialClass":"","childhood":"","lifeStory":"","talent":"","relationships":"","loveStory":"","tragedy":"","death":"","karma":"","lessonForNow":"","connectionToPresent":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
-분석 톤: 명리학에 근거한 중립적이고 객관적인 술사.
+분석 톤: 명리학에 근거하면서도 시적이고 신비로운 술사. 풍부한 디테일과 감정선을 살릴 것.
 
-분석: 이 사람의 전생
-- era: 전생의 시대 (예: 조선 중기, 고려 말 등)
-- role: 전생의 신분/직업
-- lifeStory: 유년기부터 중년까지 인생 흐름 서술 150자
-- relationships: 전생의 핵심 인연 100자
-- death: 어떤 죽음을 맞았는지 80자
-- karma: 전생에서 현생으로 이어진 업보 80자
-- description: 전생 삶에 대한 시적이고 신비로운 서술 200자 내외.
-- fortuneTellerComment: 점술가가 직접 말하듯 전생 핵심 조언 150자 내외.
-- keywords: 전생을 상징하는 키워드 4개
+분석: 이 사람의 전생 (각 항목을 구체적이고 길게, 절대 짧게 끝내지 말 것)
+- era: 전생의 시대 (예: 조선 중기, 고려 말, 신라 전성기, 명나라 중기 등 구체적으로)
+- region: 전생을 살았던 지역/나라 한 줄
+- role: 전생의 신분/직업 구체적으로
+- socialClass: 당시 사회적 위치와 영향력 60자
+- childhood: 유년기 환경과 결정적 경험 120자
+- lifeStory: 청년기~중년기 인생 흐름 서술 250자 이상
+- talent: 타고난 재능과 그 재능이 인생에 미친 영향 100자
+- relationships: 전생의 핵심 인연(가족·스승·연인·라이벌) 180자 이상
+- loveStory: 전생에서의 사랑과 그 결말 150자
+- tragedy: 인생에서 겪은 가장 큰 시련 100자
+- death: 어떤 죽음을 맞았는지, 마지막 순간의 감정 150자
+- karma: 전생에서 현생으로 이어진 업보 150자
+- lessonForNow: 그 전생이 현생의 당신에게 주는 교훈 120자
+- connectionToPresent: 현생의 성격·습관·인연에 어떻게 흔적이 남아있는지 150자
+- description: 전생 삶에 대한 시적이고 신비로운 서술 300자 이상.
+- fortuneTellerComment: 점술가가 직접 말하듯 전생 핵심 조언 200자 이상.
+- keywords: 전생을 상징하는 키워드 6개
 - imagePrompt: 영문 이미지 프롬프트. "${gender==='남성'?'Male':'Female'} figure in [era] Korean historical setting, [role], dramatic lighting, ink wash painting style, mysterious atmosphere, 8k"`;
   } else if (mode === 'face') {
-    jsonTemplate = `{"category":"","faceType":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate = `{"category":"","faceType":"","forehead":"","eyes":"","nose":"","mouth":"","earsAndJaw":"","fiveElements":"","youthFlow":"","middleFlow":"","lateFlow":"","personality":"","strength":"","weakness":"","wealth":"","career":"","love":"","health":"","socialLuck":"","caution":"","growthDirection":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
-분석: 관상 분석
-- category: 관상 유형
-- faceType: 이목구비 특징 한 줄 요약
-- lifeFlow: 청년기/중년기/말년기 인생 흐름 150자
-- personality: 성격 강점과 보완할 점 100자
-- wealth: 재물운·직업운 80자
-- love: 연애·결혼운 80자
-- caution: 주의할 점과 발전 방향 80자
-- description: 관상에 대한 신비롭고 시적인 서술 200자 내외.
-- fortuneTellerComment: 점술가가 직접 말하듯 핵심 관상 조언 150자 내외.
-- keywords: 이 관상을 상징하는 키워드 4개
+분석: 관상 분석 (각 항목 구체적·풍부하게)
+- category: 관상 유형 명칭
+- faceType: 전체 인상 한 줄 요약
+- forehead: 이마(천정·관록궁) 분석 80자
+- eyes: 눈(감정·지혜의 창) 분석 100자
+- nose: 코(재물궁) 분석 80자
+- mouth: 입(복록궁·언변) 분석 80자
+- earsAndJaw: 귀와 턱(말년운·의지력) 분석 100자
+- fiveElements: 오행 관상 분류와 그 의미 100자
+- youthFlow: 청년기(20~30대) 운세 흐름 120자
+- middleFlow: 중년기(40~50대) 운세 흐름 120자
+- lateFlow: 말년기(60대 이후) 운세 흐름 120자
+- personality: 내면 성향과 기질 150자
+- strength: 타고난 장점·재능 100자
+- weakness: 보완해야 할 점 100자
+- wealth: 재물운 상세 120자
+- career: 직업운과 어울리는 직군 120자
+- love: 연애·결혼운 120자
+- health: 건강운과 주의 부위 100자
+- socialLuck: 인덕·대인관계운 100자
+- caution: 인생에서 주의할 시기와 사건 100자
+- growthDirection: 발전을 위한 구체적 방향 120자
+- description: 관상에 대한 신비롭고 시적인 서술 300자 이상.
+- fortuneTellerComment: 점술가가 직접 말하듯 핵심 관상 조언 200자 이상.
+- keywords: 이 관상을 상징하는 키워드 6개
 - imagePrompt: 초상화 영문 프롬프트`;
   } else if (mode === 'today') {
     const todayStr = new Date().toLocaleDateString('ko-KR');
@@ -248,19 +270,36 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - successQuote: 오늘의 격언 1개 (출처 포함)
 - fortuneTellerComment: 점술가 스타일의 마무리 한 줄`;
   } else {
-    jsonTemplate = `{"firstMeeting":"","appearance":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate = `{"meetAge":"","meetSeason":"","firstMeeting":"","firstImpression":"","appearance":"","style":"","celebrity":"","animalFace":"","mbtiGuess":"","bloodType":"","job":"","income":"","family":"","hometown":"","hobbies":"","personality":"","strengths":"","flaws":"","loveStyle":"","marriedLife":"","children":"","signs":"","redFlags":"","compatibility":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
-분석: 이 사람의 미래 배우자
-- firstMeeting: 처음 만나는 상황과 장소
-- appearance: 배우자 외모 묘사
-- celebrity: 닮은 한국 연예인 1~2명
-- animalFace: 동물 관상 + 한 문장 이유
-- job: 추측 직업군 2~3가지 + 이유
-- signs: 만나기 전 나타나는 징조 2~3가지
-- personality: 배우자 성격 특징
-- description: 미래 배우자에 대한 신비로운 서술 200자 내외.
-- fortuneTellerComment: 점술가가 직접 말하듯 인연 조언 150자 내외.
-- keywords: 이 인연을 상징하는 키워드 4개
+분석: 이 사람의 미래 배우자 (각 항목 구체적이고 풍부하게)
+- meetAge: 만날 가능성이 높은 나이대와 시기
+- meetSeason: 만나는 계절과 분위기 60자
+- firstMeeting: 처음 만나는 상황과 장소를 구체적으로 120자
+- firstImpression: 첫인상과 첫 대화 분위기 100자
+- appearance: 배우자 외모 묘사 150자
+- style: 평소 스타일·패션 80자
+- celebrity: 닮은 한국 연예인 2~3명 + 어느 부분이 닮았는지
+- animalFace: 동물 관상 + 이유 100자
+- mbtiGuess: 추측 MBTI와 그 근거 80자
+- bloodType: 추측 혈액형과 분위기적 근거 50자
+- job: 추측 직업군 3가지 + 이유 150자
+- income: 경제력·재물 성향 80자
+- family: 가족 환경과 형제관계 80자
+- hometown: 출신 지역 분위기 60자
+- hobbies: 취미·관심사 100자
+- personality: 배우자 성격 특징 150자
+- strengths: 배우자의 가장 큰 매력 100자
+- flaws: 배우자의 단점·맞춰야 할 부분 100자
+- loveStyle: 연애 스타일과 표현 방식 120자
+- marriedLife: 결혼 후 함께할 삶의 모습 150자
+- children: 자녀 운과 가정 분위기 80자
+- signs: 만나기 전 나타나는 징조 3~4가지 150자
+- redFlags: 인연 만나기 전 피해야 할 사람 유형 80자
+- compatibility: 사주상 궁합과 상생 포인트 120자
+- description: 미래 배우자에 대한 신비로운 서술 300자 이상.
+- fortuneTellerComment: 점술가가 직접 말하듯 인연 조언 200자 이상.
+- keywords: 이 인연을 상징하는 키워드 6개
 - imagePrompt: 영문 이미지 프롬프트. "Portrait of a ${gender==='남성'?'beautiful Korean woman':'handsome Korean man'}, [appearance], soft warm lighting, photorealistic, romantic atmosphere, 8k"`;
   }
 
@@ -293,10 +332,17 @@ function displayResult(data,imgUrl,mode){
     document.getElementById('pastLifeDesc').textContent=data.description;
     document.getElementById('pastLifeBlocks').innerHTML=`
       <div class="info-blocks">
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 살았던 땅과 신분</div><div class="info-block-text">${(data.region||'')} · ${(data.socialClass||'')}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 유년기의 풍경</div><div class="info-block-text">${data.childhood||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 흐르던 생의 기록</div><div class="info-block-text">${data.lifeStory||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 타고난 재능</div><div class="info-block-text">${data.talent||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 얽매인 전생의 인연</div><div class="info-block-text">${data.relationships||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 전생의 사랑</div><div class="info-block-text">${data.loveStory||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 가장 큰 시련</div><div class="info-block-text">${data.tragedy||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 생의 마감과 마지막 감정</div><div class="info-block-text">${data.death||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 현생으로 이어진 업보</div><div class="info-block-text">${data.karma||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 현생에 남은 흔적</div><div class="info-block-text">${data.connectionToPresent||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 지금의 당신에게</div><div class="info-block-text">${data.lessonForNow||''}</div></div>
       </div>
     `;
     document.getElementById('pastLifeFortune').textContent=data.fortuneTellerComment;
@@ -308,12 +354,26 @@ function displayResult(data,imgUrl,mode){
     document.getElementById('faceDesc').textContent=data.description;
     document.getElementById('faceBlocks').innerHTML=`
       <div class="info-blocks">
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 이목구비 특징</div><div class="info-block-text">${data.faceType||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 인생의 큰 흐름</div><div class="info-block-text">${data.lifeFlow||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 전체 인상</div><div class="info-block-text">${data.faceType||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 오행 관상</div><div class="info-block-text">${data.fiveElements||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 이마(천정)</div><div class="info-block-text">${data.forehead||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 눈</div><div class="info-block-text">${data.eyes||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 코(재물궁)</div><div class="info-block-text">${data.nose||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 입(복록궁)</div><div class="info-block-text">${data.mouth||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 귀와 턱</div><div class="info-block-text">${data.earsAndJaw||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 청년기 운세</div><div class="info-block-text">${data.youthFlow||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 중년기 운세</div><div class="info-block-text">${data.middleFlow||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 말년기 운세</div><div class="info-block-text">${data.lateFlow||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 내면의 성향</div><div class="info-block-text">${data.personality||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 재물 및 직업운</div><div class="info-block-text">${data.wealth||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 애정 및 결혼운</div><div class="info-block-text">${data.love||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 타고난 장점</div><div class="info-block-text">${data.strength||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 보완할 점</div><div class="info-block-text">${data.weakness||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 재물운</div><div class="info-block-text">${data.wealth||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 직업운</div><div class="info-block-text">${data.career||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 애정·결혼운</div><div class="info-block-text">${data.love||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 건강운</div><div class="info-block-text">${data.health||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 인덕·대인관계</div><div class="info-block-text">${data.socialLuck||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 삶의 주의점</div><div class="info-block-text">${data.caution||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 발전 방향</div><div class="info-block-text">${data.growthDirection||''}</div></div>
       </div>
     `;
     document.getElementById('faceFortune').textContent=data.fortuneTellerComment;
@@ -327,10 +387,28 @@ function displayResult(data,imgUrl,mode){
     document.getElementById('spouseDesc').textContent=data.description;
     document.getElementById('spouseBlocks').innerHTML=`
       <div class="info-blocks">
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 만나는 시기</div><div class="info-block-text">${(data.meetAge||'')} · ${(data.meetSeason||'')}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 첫인상</div><div class="info-block-text">${data.firstImpression||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 외모</div><div class="info-block-text">${data.appearance||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 평소 스타일</div><div class="info-block-text">${data.style||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 닮은꼴 연예인</div><div class="info-block-text">${data.celebrity||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 동물 관상</div><div class="info-block-text">${data.animalFace||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 추측 MBTI</div><div class="info-block-text">${data.mbtiGuess||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 추측 혈액형</div><div class="info-block-text">${data.bloodType||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 예상 직업군</div><div class="info-block-text">${data.job||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 경제력</div><div class="info-block-text">${data.income||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 가족 환경</div><div class="info-block-text">${data.family||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 출신 지역</div><div class="info-block-text">${data.hometown||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 취미·관심사</div><div class="info-block-text">${data.hobbies||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 성격</div><div class="info-block-text">${data.personality||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 가장 큰 매력</div><div class="info-block-text">${data.strengths||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 맞춰야 할 부분</div><div class="info-block-text">${data.flaws||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 연애 스타일</div><div class="info-block-text">${data.loveStyle||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 결혼 후 모습</div><div class="info-block-text">${data.marriedLife||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 자녀운</div><div class="info-block-text">${data.children||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 만나기 전의 징조</div><div class="info-block-text">${data.signs||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 피해야 할 인연</div><div class="info-block-text">${data.redFlags||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 사주 궁합</div><div class="info-block-text">${data.compatibility||''}</div></div>
       </div>
     `;
     document.getElementById('spouseFortune').textContent=data.fortuneTellerComment;
