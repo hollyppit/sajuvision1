@@ -69,8 +69,17 @@ async function decryptAuthCode(encryptedBase64, rawKey) {
   } catch {}
 
   // 시도 4: SHA-256 해싱 키 + AAD 없음
-  const sha = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawKey));
-  return await tryDecrypt(new Uint8Array(sha), encrypted, false);
+  try {
+    const sha = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawKey));
+    return await tryDecrypt(new Uint8Array(sha), encrypted, false);
+  } catch {}
+
+  // 시도 5: 암호화 없이 base64 직접 디코딩 (샌드박스 plain JSON 가능성)
+  try {
+    return JSON.parse(new TextDecoder().decode(encrypted));
+  } catch {}
+
+  throw new Error('모든 복호화 방법 실패');
 }
 
 export async function onRequestOptions() {
