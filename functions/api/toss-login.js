@@ -77,9 +77,12 @@ export async function onRequestPost(context) {
     // authorizationCode 복호화 → 사용자 정보
     let userInfo;
     try {
+      console.log('[toss-login] authorizationCode 앞 50자:', authorizationCode?.slice(0, 50));
+      console.log('[toss-login] authorizationCode 길이:', authorizationCode?.length);
+      console.log('[toss-login] decryptKey 길이:', decryptKey?.length);
       userInfo = await decryptAuthCode(authorizationCode, decryptKey);
     } catch (err) {
-      console.error('[toss-login] 복호화 실패', err);
+      console.error('[toss-login] 복호화 실패 상세:', err.message, err.name);
       return json({ error: '사용자 정보 복호화 실패' }, 500);
     }
 
