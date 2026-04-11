@@ -34,21 +34,53 @@ export async function onRequestGet(context) {
     results.normalRoot = { error: err.message };
   }
 
-  // 4. mTLS로 토큰 엔드포인트 POST 테스트
+  // 4. connect() API로 raw TCP+TLS 연결 테스트
   if (context.env.TOSS_MTLS) {
     try {
-      const res = await context.env.TOSS_MTLS.fetch(
-        'https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss/user/oauth2/generate-token',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ authorizationCode: 'test', referrer: 'DEFAULT' }),
-        },
-      );
-      const body = await res.text();
-      results.mtlsToken = { status: res.status, body: body.slice(0, 500) };
+      const socket = context.env.TOSS_MTLS.connect('apps-in-toss-api.toss.im:443');
+      const secureSocket = socket.startTls({ expectedServerHostname: 'apps-in-toss-api.toss.im' });
+
+      const httpReq = [
+        'POST /api-partner/v1/apps-in-toss/user/oauth2/generate-token HTTP/1.1',
+        'Host: apps-in-toss-api.toss.im',
+        'Content-Type: application/json',
+        'Connection: close',
+        '',
+      ].join('\r\n');
+      const body = JSON.stringify({ authorizationCode: 'test', referrer: 'DEFAULT' });
+      const fullReq = httpReq + `Content-Length: ${body.length}\r\n\r\n${body}`;
+
+      const writer = secureSocket.writable.getWriter();
+      await writer.write(new TextEncoder().encode(fullReq));
+
+      const reader = secureSocket.readable.getReader();
+      let responseText = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        responseText += new TextDecoder().decode(value);
+        if (responseText.length > 2000) break;
+      }
+      results.connectTest = { success: true, response: responseText.slice(0, 500) };
+      await secureSocket.close();
     } catch (err) {
-      results.mtlsToken = { error: err.message };
+      results.connectTest = { error: err.message, name: err.name };
+    }
+  }
+
+  // 5. mTLS fetch with Request object
+  if (context.env.TOSS_MTLS) {
+    try {
+      const req = new Request('https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss/user/oauth2/generate-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authorizationCode: 'test', referrer: 'DEFAULT' }),
+      });
+      const res = await context.env.TOSS_MTLS.fetch(req);
+      const body = await res.text();
+      results.mtlsFetchReq = { status: res.status, body: body.slice(0, 500) };
+    } catch (err) {
+      results.mtlsFetchReq = { error: err.message };
     }
   }
 
