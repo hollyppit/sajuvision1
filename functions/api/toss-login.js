@@ -56,6 +56,17 @@ async function decryptField(encryptedBase64, keyBytes) {
   return new TextDecoder().decode(buf);
 }
 
+// ── 안전한 JSON 파싱 ──
+async function safeJson(res, label) {
+  const text = await res.text();
+  console.log(`[toss-login] ${label} status:${res.status} body:${text.slice(0, 500)}`);
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`${label} 응답 파싱 실패 (status ${res.status}): ${text.slice(0, 200)}`);
+  }
+}
+
 // ── 1단계: authorizationCode → accessToken 발급 ──
 async function exchangeToken(authorizationCode, referrer) {
   const res = await fetch(
@@ -67,8 +78,7 @@ async function exchangeToken(authorizationCode, referrer) {
     },
   );
 
-  const data = await res.json();
-  console.log('[toss-login] 토큰 발급 응답 status:', res.status);
+  const data = await safeJson(res, '토큰 발급');
 
   if (!res.ok || data.resultType === 'FAIL') {
     const reason = data.error?.reason || data.error || '토큰 발급 실패';
@@ -88,8 +98,7 @@ async function fetchUserInfo(accessToken) {
     },
   );
 
-  const data = await res.json();
-  console.log('[toss-login] 사용자 정보 조회 응답 status:', res.status);
+  const data = await safeJson(res, '사용자 조회');
 
   if (!res.ok || data.resultType === 'FAIL') {
     const reason = data.error?.reason || data.error || '사용자 정보 조회 실패';
