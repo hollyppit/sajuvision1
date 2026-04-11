@@ -129,7 +129,14 @@ export async function onRequestOptions() {
 export async function onRequestPost(context) {
   try {
     const { authorizationCode, referrer } = await context.request.json();
-    console.log('[toss-login] 요청 수신', { referrer, codeLen: authorizationCode?.length });
+    const envKeys = Object.keys(context.env).filter(k => !k.startsWith('__'));
+    console.log('[toss-login] 요청 수신', {
+      referrer,
+      codeLen: authorizationCode?.length,
+      hasMtls: !!context.env.TOSS_MTLS,
+      mtlsType: typeof context.env.TOSS_MTLS,
+      envKeys,
+    });
 
     if (!authorizationCode) {
       return json({ error: 'authorizationCode가 없습니다.' }, 400);
@@ -161,7 +168,7 @@ export async function onRequestPost(context) {
       accessToken = await exchangeToken(authorizationCode, referrer, fetchFn);
     } catch (err) {
       console.error('[toss-login] 토큰 발급 실패', err);
-      return json({ error: err.message }, 500);
+      return json({ error: err.message, hasMtls: !!context.env.TOSS_MTLS }, 500);
     }
 
     if (!accessToken) {
