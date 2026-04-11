@@ -3,13 +3,16 @@
  * POST /api/toss-login
  *
  * 토스 SDK appLogin()이 반환한 authorizationCode를 받아
- * AES-256-GCM으로 복호화하여 사용자 정보를 반환합니다.
+ * 1) 토스 API로 accessToken 발급
+ * 2) accessToken으로 사용자 정보 조회
+ * 3) 암호화된 필드를 AES-256-GCM으로 복호화
+ * 하여 사용자 정보를 반환합니다.
  *
  * 필요 환경변수 (Cloudflare Pages > Settings > Environment Variables):
- *   TOSS_LOGIN_DECRYPT_KEY  - 앱인토스 콘솔에서 발급한 사용자 정보 복호화 키
+ *   TOSS_LOGIN_DECRYPT_KEY  - 앱인토스 콘솔에서 이메일로 발급한 복호화 키 (Base64)
  */
 
-// AES-256-GCM AAD (토스 고정값)
+const TOSS_API_BASE = 'https://apps-in-toss-api.toss.im';
 const GCM_AAD = new TextEncoder().encode('TOSS');
 
 const CORS_HEADERS = {
@@ -19,69 +22,84 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json',
 };
 
-/**
- * AES-256-GCM 복호화 (Cloudflare Workers Web Crypto API)
- *
- * 토스 암호화 형식: Base64( IV[12 bytes] | Ciphertext | AuthTag[16 bytes] )
- *
- * @param {string} encryptedBase64 - appLogin()이 반환한 authorizationCode
- * @param {string} rawKey          - TOSS_LOGIN_DECRYPT_KEY 환경변수 값
- * @returns {Promise<object>}       - 복호화된 사용자 정보 JSON
- */
+// ── Base64 유틸 ──
 function fromBase64(str) {
-  // URL-safe base64 → standard base64 정규화
   const normalized = str.replace(/-/g, '+').replace(/_/g, '/').replace(/\s/g, '');
-  // 4의 배수로 패딩
   const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=');
   return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
 }
 
-async function tryDecrypt(keyBytes, encrypted, useAad) {
+// ── AES-256-GCM 개별 필드 복호화 ──
+async function decryptField(encryptedBase64, keyBytes) {
+  const encrypted = fromBase64(encryptedBase64);
+  const iv = encrypted.slice(0, 12);
+  const cipherData = encrypted.slice(12);
+
   const aesKey = await crypto.subtle.importKey(
     'raw', keyBytes, { name: 'AES-GCM' }, false, ['decrypt'],
   );
-  const iv = encrypted.slice(0, 12);
-  const cipherData = encrypted.slice(12);
-  const params = useAad
-    ? { name: 'AES-GCM', iv, additionalData: GCM_AAD, tagLength: 128 }
-    : { name: 'AES-GCM', iv, tagLength: 128 };
-  const buf = await crypto.subtle.decrypt(params, aesKey, cipherData);
-  return JSON.parse(new TextDecoder().decode(buf));
+
+  // AAD 있는 경우 시도
+  try {
+    const buf = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv, additionalData: GCM_AAD, tagLength: 128 },
+      aesKey, cipherData,
+    );
+    return new TextDecoder().decode(buf);
+  } catch {}
+
+  // AAD 없는 경우 시도
+  const buf = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv, tagLength: 128 },
+    aesKey, cipherData,
+  );
+  return new TextDecoder().decode(buf);
 }
 
-async function decryptAuthCode(encryptedBase64, rawKey) {
-  const encrypted = fromBase64(encryptedBase64);
+// ── 1단계: authorizationCode → accessToken 발급 ──
+async function exchangeToken(authorizationCode, referrer) {
+  const res = await fetch(
+    `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/generate-token`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ authorizationCode, referrer }),
+    },
+  );
 
-  // 시도 1: base64 디코딩 키 + AAD
-  try {
-    return await tryDecrypt(fromBase64(rawKey), encrypted, true);
-  } catch {}
+  const data = await res.json();
+  console.log('[toss-login] 토큰 발급 응답 status:', res.status);
 
-  // 시도 2: base64 디코딩 키 + AAD 없음
-  try {
-    return await tryDecrypt(fromBase64(rawKey), encrypted, false);
-  } catch {}
+  if (!res.ok || data.resultType === 'FAIL') {
+    const reason = data.error?.reason || data.error || '토큰 발급 실패';
+    throw new Error(`토큰 발급 실패: ${reason}`);
+  }
 
-  // 시도 3: SHA-256 해싱 키 + AAD
-  try {
-    const sha = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawKey));
-    return await tryDecrypt(new Uint8Array(sha), encrypted, true);
-  } catch {}
-
-  // 시도 4: SHA-256 해싱 키 + AAD 없음
-  try {
-    const sha = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawKey));
-    return await tryDecrypt(new Uint8Array(sha), encrypted, false);
-  } catch {}
-
-  // 시도 5: 암호화 없이 base64 직접 디코딩 (샌드박스 plain JSON 가능성)
-  try {
-    return JSON.parse(new TextDecoder().decode(encrypted));
-  } catch {}
-
-  throw new Error('모든 복호화 방법 실패');
+  return data.success?.accessToken || data.accessToken;
 }
 
+// ── 2단계: accessToken → 사용자 정보 조회 ──
+async function fetchUserInfo(accessToken) {
+  const res = await fetch(
+    `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/login-me`,
+    {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
+
+  const data = await res.json();
+  console.log('[toss-login] 사용자 정보 조회 응답 status:', res.status);
+
+  if (!res.ok || data.resultType === 'FAIL') {
+    const reason = data.error?.reason || data.error || '사용자 정보 조회 실패';
+    throw new Error(`사용자 정보 조회 실패: ${reason}`);
+  }
+
+  return data.success || data;
+}
+
+// ── 핸들러 ──
 export async function onRequestOptions() {
   return new Response(null, { status: 204, headers: CORS_HEADERS });
 }
@@ -95,7 +113,7 @@ export async function onRequestPost(context) {
       return json({ error: 'authorizationCode가 없습니다.' }, 400);
     }
 
-    // 샌드박스 환경: mock 사용자 데이터 반환 (대소문자 무관)
+    // 샌드박스 환경: mock 사용자 데이터 반환
     if (typeof referrer === 'string' && referrer.toLowerCase() === 'sandbox') {
       console.log('[toss-login] 샌드박스 환경 감지 → mock 데이터 반환');
       return json({
@@ -112,25 +130,52 @@ export async function onRequestPost(context) {
       return json({ error: '서버 설정 오류' }, 500);
     }
 
-    // authorizationCode 복호화 → 사용자 정보
+    // 1) accessToken 발급
+    let accessToken;
+    try {
+      accessToken = await exchangeToken(authorizationCode, referrer);
+    } catch (err) {
+      console.error('[toss-login] 토큰 발급 실패', err);
+      return json({ error: err.message }, 500);
+    }
+
+    if (!accessToken) {
+      console.error('[toss-login] accessToken이 비어있음');
+      return json({ error: '토큰 발급 실패: accessToken 없음' }, 500);
+    }
+
+    // 2) 사용자 정보 조회
     let userInfo;
     try {
-      userInfo = await decryptAuthCode(authorizationCode, decryptKey);
+      userInfo = await fetchUserInfo(accessToken);
     } catch (err) {
-      console.error('[toss-login] 복호화 실패', err);
+      console.error('[toss-login] 사용자 정보 조회 실패', err);
+      return json({ error: err.message }, 500);
+    }
+
+    // 3) 암호화된 필드 복호화
+    const keyBytes = fromBase64(decryptKey);
+    let name = '', birthdate = '', gender = '';
+
+    try {
+      if (userInfo.name) {
+        name = await decryptField(userInfo.name, keyBytes);
+      }
+      if (userInfo.birthday) {
+        birthdate = await decryptField(userInfo.birthday, keyBytes);
+      }
+      if (userInfo.gender) {
+        const rawGender = await decryptField(userInfo.gender, keyBytes);
+        // 토스 API: MALE/FEMALE → 프론트엔드: male/female
+        gender = rawGender.toLowerCase();
+      }
+    } catch (err) {
+      console.error('[toss-login] 필드 복호화 실패', err);
       return json({ error: '사용자 정보 복호화 실패' }, 500);
     }
 
-    // 프론트엔드에 필요한 필드만 반환
-    // 복호화 결과 필드: name, birthdate(YYYYMMDD), gender('male'|'female')
-    const payload = {
-      name:      userInfo.name      ?? '',
-      birthdate: userInfo.birthdate ?? '',
-      gender:    userInfo.gender    ?? '',
-      referrer,
-    };
-
-    console.log('[toss-login] 로그인 성공', { name: payload.name, referrer });
+    const payload = { name, birthdate, gender, referrer };
+    console.log('[toss-login] 로그인 성공', { name, referrer });
     return json(payload, 200);
 
   } catch (err) {
