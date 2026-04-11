@@ -70,19 +70,19 @@ async function safeJson(res, label) {
   }
 }
 
-// ── mTLS fetch 헬퍼: 바인딩이 있으면 mTLS, 없으면 일반 fetch ──
-function mtlsFetch(env) {
+// ── mTLS fetch: 바인딩이 있으면 mTLS, 없으면 일반 fetch ──
+async function mtlsFetch(env, url, options) {
   if (env.TOSS_MTLS) {
-    console.log('[toss-login] mTLS 바인딩 사용');
-    return env.TOSS_MTLS.fetch.bind(env.TOSS_MTLS);
+    console.log('[toss-login] mTLS fetch →', url);
+    return await env.TOSS_MTLS.fetch(url, options);
   }
-  console.warn('[toss-login] TOSS_MTLS 바인딩 없음 → 일반 fetch 사용 (mTLS 필요 시 실패할 수 있음)');
-  return fetch;
+  console.warn('[toss-login] TOSS_MTLS 바인딩 없음 → 일반 fetch');
+  return await fetch(url, options);
 }
 
 // ── 1단계: authorizationCode → accessToken 발급 ──
-async function exchangeToken(authorizationCode, referrer, fetchFn) {
-  const res = await fetchFn(
+async function exchangeToken(authorizationCode, referrer, env) {
+  const res = await mtlsFetch(env,
     `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/generate-token`,
     {
       method: 'POST',
@@ -102,8 +102,8 @@ async function exchangeToken(authorizationCode, referrer, fetchFn) {
 }
 
 // ── 2단계: accessToken → 사용자 정보 조회 ──
-async function fetchUserInfo(accessToken, fetchFn) {
-  const res = await fetchFn(
+async function fetchUserInfo(accessToken, env) {
+  const res = await mtlsFetch(env,
     `${TOSS_API_BASE}/api-partner/v1/apps-in-toss/user/oauth2/login-me`,
     {
       method: 'GET',
@@ -159,13 +159,10 @@ export async function onRequestPost(context) {
       return json({ error: '서버 설정 오류' }, 500);
     }
 
-    // mTLS fetch 함수 준비
-    const fetchFn = mtlsFetch(context.env);
-
     // 1) accessToken 발급
     let accessToken;
     try {
-      accessToken = await exchangeToken(authorizationCode, referrer, fetchFn);
+      accessToken = await exchangeToken(authorizationCode, referrer, context.env);
     } catch (err) {
       console.error('[toss-login] 토큰 발급 실패', err);
       return json({ error: err.message, hasMtls: !!context.env.TOSS_MTLS }, 500);
@@ -179,7 +176,7 @@ export async function onRequestPost(context) {
     // 2) 사용자 정보 조회
     let userInfo;
     try {
-      userInfo = await fetchUserInfo(accessToken, fetchFn);
+      userInfo = await fetchUserInfo(accessToken, context.env);
     } catch (err) {
       console.error('[toss-login] 사용자 정보 조회 실패', err);
       return json({ error: err.message }, 500);
