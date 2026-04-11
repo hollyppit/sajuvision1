@@ -37,7 +37,9 @@ export async function onRequestGet(context) {
   // 4. connect() API로 raw TCP+TLS 연결 테스트
   if (context.env.TOSS_MTLS) {
     try {
-      const socket = context.env.TOSS_MTLS.connect('apps-in-toss-api.toss.im:443');
+      const socket = context.env.TOSS_MTLS.connect('apps-in-toss-api.toss.im:443', {
+        secureTransport: 'starttls',
+      });
       const secureSocket = socket.startTls({ expectedServerHostname: 'apps-in-toss-api.toss.im' });
 
       const httpReq = [
