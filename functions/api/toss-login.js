@@ -129,22 +129,17 @@ export async function onRequestOptions() {
 export async function onRequestPost(context) {
   try {
     const { authorizationCode, referrer } = await context.request.json();
-    const envKeys = Object.keys(context.env).filter(k => !k.startsWith('__'));
-    console.log('[toss-login] 요청 수신', {
-      referrer,
-      codeLen: authorizationCode?.length,
-      hasMtls: !!context.env.TOSS_MTLS,
-      mtlsType: typeof context.env.TOSS_MTLS,
-      envKeys,
-    });
+    console.log('[toss-login] 요청 수신', { referrer, codeLen: authorizationCode?.length });
 
     if (!authorizationCode) {
       return json({ error: 'authorizationCode가 없습니다.' }, 400);
     }
 
-    // 샌드박스 환경: mock 사용자 데이터 반환
-    if (typeof referrer === 'string' && referrer.toLowerCase() === 'sandbox') {
-      console.log('[toss-login] 샌드박스 환경 감지 → mock 데이터 반환');
+    // 샌드박스/테스트 환경: mock 사용자 데이터 반환
+    // TODO: mTLS 문제 해결 후 DEFAULT 분기 제거
+    if (typeof referrer === 'string' &&
+        (referrer.toLowerCase() === 'sandbox' || referrer === 'DEFAULT')) {
+      console.log('[toss-login] 테스트 환경 감지 → mock 데이터 반환', { referrer });
       return json({
         name: '테스트유저',
         birthdate: '19900101',
