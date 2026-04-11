@@ -38,33 +38,38 @@ export async function onRequestGet(context) {
   if (context.env.TOSS_MTLS) {
     try {
       const socket = context.env.TOSS_MTLS.connect('apps-in-toss-api.toss.im:443', {
-        secureTransport: 'starttls',
+        secureTransport: 'on',
+        expectedServerHostname: 'apps-in-toss-api.toss.im',
       });
-      const secureSocket = socket.startTls({ expectedServerHostname: 'apps-in-toss-api.toss.im' });
 
+      const body = JSON.stringify({ authorizationCode: 'test', referrer: 'DEFAULT' });
       const httpReq = [
         'POST /api-partner/v1/apps-in-toss/user/oauth2/generate-token HTTP/1.1',
         'Host: apps-in-toss-api.toss.im',
         'Content-Type: application/json',
+        `Content-Length: ${body.length}`,
         'Connection: close',
         '',
+        body,
       ].join('\r\n');
-      const body = JSON.stringify({ authorizationCode: 'test', referrer: 'DEFAULT' });
-      const fullReq = httpReq + `Content-Length: ${body.length}\r\n\r\n${body}`;
 
-      const writer = secureSocket.writable.getWriter();
-      await writer.write(new TextEncoder().encode(fullReq));
+      const writer = socket.writable.getWriter();
+      await writer.write(new TextEncoder().encode(httpReq));
+      await writer.close();
 
-      const reader = secureSocket.readable.getReader();
+      const reader = socket.readable.getReader();
       let responseText = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        responseText += new TextDecoder().decode(value);
-        if (responseText.length > 2000) break;
-      }
+      const timeout = setTimeout(() => reader.cancel(), 5000);
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          responseText += new TextDecoder().decode(value);
+          if (responseText.length > 2000) break;
+        }
+      } catch {}
+      clearTimeout(timeout);
       results.connectTest = { success: true, response: responseText.slice(0, 500) };
-      await secureSocket.close();
     } catch (err) {
       results.connectTest = { error: err.message, name: err.name };
     }
