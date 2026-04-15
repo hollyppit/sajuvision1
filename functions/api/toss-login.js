@@ -135,19 +135,6 @@ export async function onRequestPost(context) {
       return json({ error: 'authorizationCode가 없습니다.' }, 400);
     }
 
-    // 샌드박스/테스트 환경: mock 사용자 데이터 반환
-    // TODO: mTLS 문제 해결 후 DEFAULT 분기 제거
-    if (typeof referrer === 'string' &&
-        (referrer.toLowerCase() === 'sandbox' || referrer === 'DEFAULT')) {
-      console.log('[toss-login] 테스트 환경 감지 → mock 데이터 반환', { referrer });
-      return json({
-        name: '테스트유저',
-        birthdate: '19900101',
-        gender: 'female',
-        referrer,
-      }, 200);
-    }
-
     const decryptKey = context.env.TOSS_LOGIN_DECRYPT_KEY;
     if (!decryptKey) {
       console.error('[toss-login] 환경변수 TOSS_LOGIN_DECRYPT_KEY 누락');
