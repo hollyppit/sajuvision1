@@ -1,3 +1,6 @@
+name = "sajuvision2"
+pages_build_output_dir = "."
+
 [[mtls_certificates]]
 binding = "TOSS_MTLS"
 certificate_id = "16ac8b48-942c-4ca6-ba9c-7ceabffaf325"
