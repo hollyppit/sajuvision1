@@ -3,4 +3,4 @@ pages_build_output_dir = "."
 
 [[mtls_certificates]]
 binding = "TOSS_MTLS"
-certificate_id = "16ac8b48-942c-4ca6-ba9c-7ceabffaf325"
+certificate_id = "1968487e-45e3-4009-bad7-0c49cd1361cf"

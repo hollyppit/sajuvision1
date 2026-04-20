@@ -70,9 +70,13 @@ async function safeJson(res, label) {
   }
 }
 
-// ── fetch: 일반 HTTPS (토스 API는 mTLS 불필요) ──
+// ── fetch: mTLS (앱인토스 API는 mTLS 필수) ──
 async function mtlsFetch(env, url, options) {
-  console.log('[toss-login] fetch →', url);
+  if (env.TOSS_MTLS) {
+    console.log('[toss-login] mTLS fetch →', url);
+    return await env.TOSS_MTLS.fetch(url, options);
+  }
+  console.error('[toss-login] TOSS_MTLS 바인딩 없음 — mTLS 없이 호출하면 520 발생');
   return await fetch(url, options);
 }
 
