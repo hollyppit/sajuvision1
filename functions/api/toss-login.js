@@ -70,14 +70,36 @@ async function safeJson(res, label) {
   }
 }
 
-// ── fetch: mTLS (앱인토스 API는 mTLS 필수) ──
-async function mtlsFetch(env, url, options) {
-  if (env.TOSS_MTLS) {
-    console.log('[toss-login] mTLS fetch →', url);
-    return await env.TOSS_MTLS.fetch(url, options);
+// ── fetch: 국내 프록시 경유 mTLS (CF egress가 토스에 차단돼서 불가피) ──
+async function mtlsFetch(env, url, options = {}) {
+  if (!env.TOSS_PROXY_URL || !env.TOSS_PROXY_SECRET) {
+    throw new Error('TOSS_PROXY_URL / TOSS_PROXY_SECRET 환경변수 없음');
   }
-  console.error('[toss-login] TOSS_MTLS 바인딩 없음 — mTLS 없이 호출하면 520 발생');
-  return await fetch(url, options);
+  const u = new URL(url);
+  const payload = {
+    path: u.pathname + u.search,
+    method: options.method || 'GET',
+    headers: options.headers || {},
+    body: options.body || null,
+  };
+  console.log('[toss-login] proxy →', u.pathname);
+  const res = await fetch(env.TOSS_PROXY_URL.replace(/\/$/, '') + '/mtls', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${env.TOSS_PROXY_SECRET}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`프록시 호출 실패 (${res.status}): ${errText.slice(0, 200)}`);
+  }
+  const { status, body } = await res.json();
+  return new Response(body, {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 // ── 1단계: authorizationCode → accessToken 발급 ──
@@ -147,7 +169,7 @@ export async function onRequestPost(context) {
       accessToken = await exchangeToken(authorizationCode, referrer, context.env);
     } catch (err) {
       console.error('[toss-login] 토큰 발급 실패', err);
-      return json({ error: err.message, hasMtls: !!context.env.TOSS_MTLS }, 500);
+      return json({ error: err.message }, 500);
     }
 
     if (!accessToken) {
