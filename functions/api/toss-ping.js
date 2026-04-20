@@ -44,6 +44,16 @@ export async function onRequest(context) {
     results.plain_ip = { status: r5.status, body: (await r5.text()).slice(0, 200) };
   } catch (e) { results.plain_ip = { error: e.message }; }
 
+  try {
+    const r6 = await fetch('https://www.naver.com/', { method: 'GET' });
+    results.naver_sanity = { status: r6.status, size: (await r6.text()).length };
+  } catch (e) { results.naver_sanity = { error: e.message }; }
+
+  try {
+    const r7 = await fetch('https://api.github.com/', { method: 'GET' });
+    results.github_sanity = { status: r7.status, body: (await r7.text()).slice(0, 100) };
+  } catch (e) { results.github_sanity = { error: e.message }; }
+
   return new Response(JSON.stringify(results, null, 2), {
     headers: { 'Content-Type': 'application/json' },
   });
