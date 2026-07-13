@@ -53,8 +53,25 @@ h1{font-family:'Nanum Myeongjo',serif;font-size:clamp(30px,8vw,52px);font-weight
 .photo-note{font-size:11px;color:var(--mist);opacity:.4;text-align:center;letter-spacing:1px;}
 .photo-skip{font-size:11px;color:rgba(201,150,58,.45);letter-spacing:2px;cursor:pointer;text-decoration:underline;text-underline-offset:4px;transition:color .2s;}
 .photo-skip:hover{color:var(--gold);}
+.photo-camera-btn{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(201,150,58,.7);letter-spacing:2px;cursor:pointer;border:1px solid rgba(201,150,58,.3);padding:8px 14px;border-radius:1px;transition:all .2s;background:rgba(201,150,58,.04);}
+.photo-camera-btn:hover{color:var(--gold-light);border-color:rgba(201,150,58,.6);background:rgba(201,150,58,.08);}
+
+.camera-overlay{display:none;position:fixed;inset:0;background:rgba(5,3,1,.94);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;}
+.camera-overlay.show{display:flex;}
+.camera-box{width:100%;max-width:480px;display:flex;flex-direction:column;align-items:center;gap:20px;}
+.camera-box video{width:100%;max-height:60vh;border:1px solid rgba(201,150,58,.35);border-radius:2px;background:#000;transform:scaleX(-1);}
+.camera-controls{display:flex;gap:14px;width:100%;}
+.camera-btn{flex:1;padding:14px;font-family:'Nanum Myeongjo',serif;font-size:14px;letter-spacing:3px;cursor:pointer;border-radius:1px;transition:all .3s;}
+.camera-btn-cancel{background:transparent;border:1px solid rgba(201,150,58,.3);color:var(--mist);}
+.camera-btn-cancel:hover{border-color:rgba(201,150,58,.6);color:var(--paper);}
+.camera-btn-capture{background:var(--gold);border:1px solid var(--gold);color:#0d0a05;font-weight:700;}
+.camera-btn-capture:hover{background:var(--gold-light);}
 
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.birth-date-grid{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;}
+.birth-date-field{position:relative;}
+.birth-date-field input{padding-right:30px;text-align:center;}
+.birth-date-field span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--mist);opacity:.5;pointer-events:none;}
 .form-group{display:flex;flex-direction:column;gap:8px;}
 .form-group.full{grid-column:1/-1;}
 label{font-size:11px;color:var(--gold);letter-spacing:3px;opacity:.8;}
@@ -222,6 +239,10 @@ select option{background:#1a1008;}
         <p>클릭하여<br>사진 업로드</p>
       </div>
       <input type="file" id="photoInput" accept="image/*">
+      <span class="photo-camera-btn" id="photoCameraBtn" onclick="openCamera()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        카메라로 촬영
+      </span>
       <p class="photo-note" id="photoNote">사진이 있으면 외모 특징을 분석에 반영합니다</p>
       <span class="photo-skip" id="photoSkipBtn" onclick="clearPhoto()">✕ 사진 없이 진행하기</span>
     </div>
@@ -234,9 +255,22 @@ select option{background:#1a1008;}
         <label>이름</label>
         <input type="text" id="name" placeholder="홍길동">
       </div>
-      <div class="form-group">
+      <div class="form-group full">
         <label>생년월일</label>
-        <input type="date" id="birthDate">
+        <div class="birth-date-grid">
+          <div class="birth-date-field">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="birthYear" placeholder="1990">
+            <span>년</span>
+          </div>
+          <div class="birth-date-field">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" id="birthMonth" placeholder="1">
+            <span>월</span>
+          </div>
+          <div class="birth-date-field">
+            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" id="birthDay" placeholder="1">
+            <span>일</span>
+          </div>
+        </div>
       </div>
       <div class="form-group">
         <label>태어난 시간</label>
@@ -379,6 +413,17 @@ select option{background:#1a1008;}
 
 <div id="printArea"></div>
 
+<div class="camera-overlay" id="cameraOverlay">
+  <div class="camera-box">
+    <video id="cameraVideo" autoplay playsinline muted></video>
+    <div class="camera-controls">
+      <button class="camera-btn camera-btn-cancel" onclick="closeCamera()">취소</button>
+      <button class="camera-btn camera-btn-capture" onclick="capturePhoto()">촬영</button>
+    </div>
+  </div>
+</div>
+<canvas id="cameraCanvas" style="display:none;"></canvas>
+
 <script>
 let uploadedPhoto = null;
 let currentMode   = 'past';
@@ -419,6 +464,12 @@ function setMode(mode){
   }
 }
 
+['birthYear','birthMonth','birthDay'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',function(e){
+    e.target.value=e.target.value.replace(/[^0-9]/g,'');
+  });
+});
+
 document.getElementById('photoInput').addEventListener('change',function(e){
   const file=e.target.files[0]; if(!file)return;
   const reader=new FileReader();
@@ -443,11 +494,60 @@ function clearPhoto(){
   document.getElementById('photoSkipBtn').textContent='✕ 사진 없이 진행하기';
 }
 
+let cameraStream=null;
+
+async function openCamera(){
+  if(!navigator.mediaDevices?.getUserMedia){
+    return showError('이 브라우저에서는 카메라 촬영을 지원하지 않습니다. 파일 업로드를 이용해주세요.');
+  }
+  try{
+    cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    document.getElementById('cameraVideo').srcObject=cameraStream;
+    document.getElementById('cameraOverlay').classList.add('show');
+  }catch(err){
+    showError('카메라를 사용할 수 없습니다. 브라우저의 카메라 권한을 확인해주세요.');
+  }
+}
+
+function closeCamera(){
+  if(cameraStream){
+    cameraStream.getTracks().forEach(t=>t.stop());
+    cameraStream=null;
+  }
+  document.getElementById('cameraOverlay').classList.remove('show');
+}
+
+function capturePhoto(){
+  const video=document.getElementById('cameraVideo');
+  const canvas=document.getElementById('cameraCanvas');
+  canvas.width=video.videoWidth;
+  canvas.height=video.videoHeight;
+  const ctx=canvas.getContext('2d');
+  ctx.translate(canvas.width,0);
+  ctx.scale(-1,1);
+  ctx.drawImage(video,0,0,canvas.width,canvas.height);
+  const dataUrl=canvas.toDataURL('image/jpeg',.92);
+  uploadedPhoto={dataUrl,base64:dataUrl.split(',')[1],mediaType:'image/jpeg'};
+  document.getElementById('photoDrop').innerHTML=`<img src="${dataUrl}" alt="촬영 사진">`;
+  document.getElementById('photoSkipBtn').textContent='✕ 사진 제거';
+  closeCamera();
+}
+
 function setLoadingStep(t){document.getElementById('loadingStep').textContent=t;}
+
+function getBirthDate(){
+  const y=document.getElementById('birthYear').value.trim();
+  const m=document.getElementById('birthMonth').value.trim();
+  const d=document.getElementById('birthDay').value.trim();
+  if(!y||!m||!d)return null;
+  const yn=Number(y),mn=Number(m),dn=Number(d);
+  if(yn<1900||yn>2026||mn<1||mn>12||dn<1||dn>31)return null;
+  return `${String(yn).padStart(4,'0')}-${String(mn).padStart(2,'0')}-${String(dn).padStart(2,'0')}`;
+}
 
 async function startReveal(){
   const name=document.getElementById('name').value.trim();
-  const birthDate=document.getElementById('birthDate').value;
+  const birthDate=getBirthDate();
   const birthHour=document.getElementById('birthHour').value;
   const gender=document.getElementById('gender').value;
   const calType=document.getElementById('calType').value;
@@ -455,7 +555,7 @@ async function startReveal(){
   errorEl.classList.remove('show');
 
   if(!name)return showError('이름을 입력해주세요.');
-  if(!birthDate)return showError('생년월일을 입력해주세요.');
+  if(!birthDate)return showError('생년월일을 정확히 입력해주세요. (예: 1990 / 1 / 1)');
   if(currentMode === 'face' && !uploadedPhoto) return showError('관상 분석은 사진 업로드가 필요합니다.');
 
   const btn=document.getElementById('revealBtn');
