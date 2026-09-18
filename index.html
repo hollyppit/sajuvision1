@@ -79,6 +79,8 @@ input,select{background:rgba(255,255,255,.04);border:1px solid rgba(201,150,58,.
 input:focus,select:focus{border-color:rgba(201,150,58,.6);}
 input::placeholder{color:rgba(255,255,255,.2);}
 select option{background:#1a1008;}
+.leap-month-check{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mist);letter-spacing:0;opacity:.85;cursor:pointer;text-transform:none;}
+.leap-month-check input[type="checkbox"]{width:14px;height:14px;accent-color:var(--gold);cursor:pointer;}
 
 .btn-main{width:100%;padding:17px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Nanum Myeongjo',serif;font-size:17px;font-weight:700;letter-spacing:6px;cursor:pointer;transition:all .4s;position:relative;overflow:hidden;margin-top:10px;}
 .btn-main::before{content:'';position:absolute;inset:0;background:var(--gold);transform:translateX(-100%);transition:transform .4s;}
@@ -299,10 +301,13 @@ select option{background:#1a1008;}
       </div>
       <div class="form-group">
         <label>태양력 / 음력</label>
-        <select id="calType">
+        <select id="calType" onchange="toggleLeapMonthField()">
           <option value="양력">양력</option>
           <option value="음력">음력</option>
         </select>
+        <label class="leap-month-check" id="leapMonthWrap" style="display:none;">
+          <input type="checkbox" id="isLeapMonth"> 윤달(閏月) 생일이에요
+        </label>
       </div>
     </div>
     <button class="btn-main" id="revealBtn" onclick="startReveal()">
@@ -535,6 +540,12 @@ function capturePhoto(){
 
 function setLoadingStep(t){document.getElementById('loadingStep').textContent=t;}
 
+function toggleLeapMonthField(){
+  const isLunar=document.getElementById('calType').value==='음력';
+  document.getElementById('leapMonthWrap').style.display=isLunar?'flex':'none';
+  if(!isLunar)document.getElementById('isLeapMonth').checked=false;
+}
+
 function getBirthDate(){
   const y=document.getElementById('birthYear').value.trim();
   const m=document.getElementById('birthMonth').value.trim();
@@ -588,7 +599,8 @@ async function startReveal(){
 
     setLoadingStep(currentMode === 'face' ? '관상을 분석하는 중...' : '사주의 기운을 읽는 중...');
     const [by, bm, bd] = birthDate.split('-').map(Number);
-    const saju = computeSaju(by, bm, bd, birthHour, calType);
+    const isLeapMonth = calType==='음력' && document.getElementById('isLeapMonth').checked;
+    const saju = computeSaju(by, bm, bd, birthHour, calType, isLeapMonth);
     const prompt = buildPrompt(name, birthDate, birthHour, gender, calType, currentMode, saju);
 
     // Cloudflare Function 호출 (분석)
@@ -665,7 +677,7 @@ async function startReveal(){
 // AI가 사주를 임의로 지어내면서 생기는 오류(오행/일간 오답 등)를 막기 위해
 // 년주·월주·일주·시주와 오행 분포를 코드로 직접 계산해 AI에게 사실로 전달한다.
 // =============================================
-function computeSaju(y, m, d, birthHourStr, calType){
+function computeSaju(y, m, d, birthHourStr, calType, isLeapMonth){
   try{
     if(typeof Lunar==='undefined' || typeof Solar==='undefined') return null;
     const HOUR_START={'자':23,'축':1,'인':3,'묘':5,'진':7,'사':9,'오':11,'미':13,'신':15,'유':17,'술':19,'해':21};
@@ -675,9 +687,18 @@ function computeSaju(y, m, d, birthHourStr, calType){
       const h=HOUR_START[birthHourStr.charAt(0)];
       if(h!==undefined) hour=h;
     }
-    const lunar = (calType==='음력')
-      ? Lunar.fromYmdHms(y, m, d, hour, minute, 0)
-      : Solar.fromYmdHms(y, m, d, hour, minute, 0).getLunar();
+    // 윤달(閏月)은 lunar-javascript 규칙상 월을 음수로 지정 (예: 윤2월 = -2)
+    let lunar;
+    if(calType==='음력'){
+      try{
+        lunar = Lunar.fromYmdHms(y, isLeapMonth ? -Math.abs(m) : m, d, hour, minute, 0);
+      }catch(leapErr){
+        // 해당 연도에 실제로 없는 윤달을 지정한 경우 등 -> 평달로 재시도
+        lunar = Lunar.fromYmdHms(y, Math.abs(m), d, hour, minute, 0);
+      }
+    } else {
+      lunar = Solar.fromYmdHms(y, m, d, hour, minute, 0).getLunar();
+    }
     const ec = lunar.getEightChar();
 
     const GAN_KR={'甲':'갑','乙':'을','丙':'병','丁':'정','戊':'무','己':'기','庚':'경','辛':'신','壬':'임','癸':'계'};
