@@ -667,14 +667,21 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
   let jsonTemplate, modeInstruction;
 
   if(mode==='past'){
-    jsonTemplate=`{"era":"","dynasty":"","role":"","socialClass":"","lifeStory":"","relationships":"","death":"","karma":"","talent":"","tragedy":"","legacy":"","pastLifeColor":"","reincarnationSign":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
-    modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
+    jsonTemplate=`{"sajuAnalysis":"","era":"","dynasty":"","role":"","socialClass":"","lifeStory":"","relationships":"","death":"","karma":"","talent":"","tragedy":"","legacy":"","pastLifeColor":"","reincarnationSign":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
+
+[작업 순서 - 반드시 지킬 것]
+1) 먼저 생년월일시(${birthDate}, ${birthHour}, ${gender})로 사주팔자(년주·월주·일주·시주)를 세우고, 일간의 강약, 오행의 과다·부족, 용신·기신을 실제로 추론한다. 이 내부 판단을 sajuAnalysis 항목에 60자 내외로 요약해 적는다 (예: "일간 신약, 목 기운 과다, 금이 용신" 식의 구체적 명리 용어 포함). 절대 60자를 넘기지 말 것.
+2) 그 사주 구조에서 실제로 드러나는 강점뿐 아니라 약점·결핍·흉살도 반드시 반영해서 아래 전생 서사를 구성한다. 사주가 약하거나 오행이 편중되어 있으면 전생도 순탄치 않았던 인물(가난, 몰락, 이른 죽음, 배신, 실패한 야망 등)로 그릴 것.
+3) 신분(role/socialClass)을 무조건 왕족·양반·영웅·고관 등 좋은 신분으로 주지 말 것. 사주 결과에 따라 평민, 노비, 몰락한 양반, 떠돌이, 생계가 어려웠던 인물 등 절반 이상의 경우 평범하거나 고단한 신분이 나오도록 한다.
+4) tragedy·death·karma는 형식적으로 넣는 게 아니라 실제로 무겁고 아프게 서술한다. 모든 사람에게 "결국은 의미 있었다", "교훈을 얻었다" 식으로 미화된 결말을 주지 말 것 — 일부는 해소되지 않은 채 씁쓸하게 끝나도 된다.
 
 분석: 이 사람의 전생
+- sajuAnalysis: 위 1)의 명리학적 내부 판단 요약 60자. 절대 60자를 넘기지 말 것.
 - era: 전생의 시대 (예: 조선 중기, 고려 말, 신라 통일기 등)
 - dynasty: 왕조/국가명 (예: 조선, 고려, 신라, 발해, 고구려, 가야, 일제강점기 등)
-- role: 전생의 신분/직업 (구체적으로)
-- socialClass: 계급 상세 (양반/중인/평민/천민 중 하나 + 구체적 설명)
+- role: 전생의 신분/직업 (사주 근거에 따라 구체적으로. 좋은 신분에 치우치지 말 것)
+- socialClass: 계급 상세 (양반/중인/평민/천민 중 하나 + 구체적 설명, 사주가 약하면 낮은 계급도 자연스럽게)
 - lifeStory: 유년기부터 중년까지 인생 흐름 서술 140자 (기쁨과 고난을 균형 있게 포함하여 사실적으로). 절대 140자를 넘기지 말 것.
 - relationships: 전생의 핵심 인연(은인/원수/사랑 등) 110자. 절대 110자를 넘기지 말 것.
 - death: 어떤 죽음을 맞았는지, 마지막 감정 90자 (담담하고 중립적으로 서술). 절대 90자를 넘기지 말 것.
@@ -799,6 +806,7 @@ function renderPastResult(data,imgUrl){
   const imgSrc=imgUrl||``;
   const imgEl=imgUrl?`<img id="pastLifeImg" src="${imgSrc}" alt="전생의 모습" style="width:100%;display:block;">`:`<div id="pastLifeImg" style="display:none;"></div>`;
   const blocks=`
+    ${data.sajuAnalysis?`<div class="info-block"><div class="info-block-title"><i>✦</i> 사주 근거</div><div class="info-block-text">${esc(data.sajuAnalysis)}</div></div>`:''}
     <div class="info-block"><div class="info-block-title"><i>✦</i> 흐르던 생의 기록</div><div class="info-block-text">${esc(data.lifeStory||'')}</div></div>
     <div class="info-block"><div class="info-block-title"><i>✦</i> 얽매인 전생의 인연</div><div class="info-block-text">${esc(data.relationships||'')}</div></div>
     <div class="info-block"><div class="info-block-title"><i>✦</i> 생의 마감과 마지막 감정</div><div class="info-block-text">${esc(data.death||'')}</div></div>
@@ -985,6 +993,7 @@ async function exportPDF(){
       <div class="pdf-img-wrap">${imgHtml}</div>
       <div class="pdf-desc">${tr(parsed.description)}</div>
       <div class="pdf-info-blocks">
+        ${parsed.sajuAnalysis?`<div class="pdf-info-block"><span class="pdf-info-title">✦ 사주 근거: </span><span class="pdf-info-text">${tr(parsed.sajuAnalysis)}</span></div>`:''}
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 타고난 재능: </span><span class="pdf-info-text">${tr(parsed.talent)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 흐르던 생의 기록: </span><span class="pdf-info-text">${tr(parsed.lifeStory)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 얽매인 전생의 인연: </span><span class="pdf-info-text">${tr(parsed.relationships)}</span></div>
