@@ -587,7 +587,9 @@ async function startReveal(){
     }
 
     setLoadingStep(currentMode === 'face' ? '관상을 분석하는 중...' : '사주의 기운을 읽는 중...');
-    const prompt = buildPrompt(name, birthDate, birthHour, gender, calType, currentMode);
+    const [by, bm, bd] = birthDate.split('-').map(Number);
+    const saju = computeSaju(by, bm, bd, birthHour, calType);
+    const prompt = buildPrompt(name, birthDate, birthHour, gender, calType, currentMode, saju);
 
     // Cloudflare Function 호출 (분석)
     const analyzeRes = await fetch('/api/analyze', {
@@ -658,20 +660,102 @@ async function startReveal(){
   }
 }
 
-function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
+// =============================================
+// 사주팔자 실제 계산 (lunar-javascript, 만세력 기반)
+// AI가 사주를 임의로 지어내면서 생기는 오류(오행/일간 오답 등)를 막기 위해
+// 년주·월주·일주·시주와 오행 분포를 코드로 직접 계산해 AI에게 사실로 전달한다.
+// =============================================
+function computeSaju(y, m, d, birthHourStr, calType){
+  try{
+    if(typeof Lunar==='undefined' || typeof Solar==='undefined') return null;
+    const HOUR_START={'자':23,'축':1,'인':3,'묘':5,'진':7,'사':9,'오':11,'미':13,'신':15,'유':17,'술':19,'해':21};
+    const hourKnown = !!birthHourStr && birthHourStr!=='시간 미상';
+    let hour=12, minute=0;
+    if(hourKnown){
+      const h=HOUR_START[birthHourStr.charAt(0)];
+      if(h!==undefined) hour=h;
+    }
+    const lunar = (calType==='음력')
+      ? Lunar.fromYmdHms(y, m, d, hour, minute, 0)
+      : Solar.fromYmdHms(y, m, d, hour, minute, 0).getLunar();
+    const ec = lunar.getEightChar();
+
+    const GAN_KR={'甲':'갑','乙':'을','丙':'병','丁':'정','戊':'무','己':'기','庚':'경','辛':'신','壬':'임','癸':'계'};
+    const ZHI_KR={'子':'자','丑':'축','寅':'인','卯':'묘','辰':'진','巳':'사','午':'오','未':'미','申':'신','酉':'유','戌':'술','亥':'해'};
+    const GAN_WX={'甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수'};
+    const ZHI_WX={'子':'수','丑':'토','寅':'목','卯':'목','辰':'토','巳':'화','午':'화','未':'토','申':'금','酉':'금','戌':'토','亥':'수'};
+
+    const yGan=ec.getYearGan(), yZhi=ec.getYearZhi();
+    const mGan=ec.getMonthGan(), mZhi=ec.getMonthZhi();
+    const dGan=ec.getDayGan(), dZhi=ec.getDayZhi();
+    const tGan=hourKnown?ec.getTimeGan():null, tZhi=hourKnown?ec.getTimeZhi():null;
+
+    const gans=[yGan,mGan,dGan].concat(hourKnown?[tGan]:[]);
+    const zhis=[yZhi,mZhi,dZhi].concat(hourKnown?[tZhi]:[]);
+    const wxCount={목:0,화:0,토:0,금:0,수:0};
+    gans.forEach(g=>{ if(GAN_WX[g]) wxCount[GAN_WX[g]]++; });
+    zhis.forEach(z=>{ if(ZHI_WX[z]) wxCount[ZHI_WX[z]]++; });
+
+    const toKr=(g,z)=>`${GAN_KR[g]||g}${ZHI_KR[z]||z}`;
+    const pillars={
+      year: toKr(yGan,yZhi),
+      month: toKr(mGan,mZhi),
+      day: toKr(dGan,dZhi),
+      time: hourKnown?toKr(tGan,tZhi):'시간 미상(미반영)'
+    };
+    const missing = Object.entries(wxCount).filter(([,v])=>v===0).map(([k])=>k);
+    const sorted = Object.entries(wxCount).sort((a,b)=>b[1]-a[1]);
+    const dominant = sorted[0][1]>0 ? sorted[0][0] : null;
+
+    return {
+      pillars,
+      dayGan: GAN_KR[dGan]||dGan,
+      dayGanWuxing: GAN_WX[dGan]||'',
+      wxCount,
+      missing,
+      dominant,
+      hourKnown
+    };
+  }catch(e){
+    console.error('사주 계산 오류', e);
+    return null;
+  }
+}
+
+// 계산된 사주 데이터를 AI 프롬프트에 넣을 고정 사실 텍스트로 변환
+function formatSajuFacts(saju){
+  if(!saju) return null;
+  const wx = saju.wxCount;
+  const wxLine = `목${wx.목} 화${wx.화} 토${wx.토} 금${wx.금} 수${wx.수}`;
+  const missingLine = saju.missing.length ? `${saju.missing.join('·')} 기운 없음` : '오행 결핍 없음';
+  const dominantLine = saju.dominant ? `${saju.dominant} 기운 과다` : '뚜렷한 편중 없음';
+  return `- 년주: ${saju.pillars.year} / 월주: ${saju.pillars.month} / 일주: ${saju.pillars.day} / 시주: ${saju.pillars.time}
+- 일간(본인): ${saju.dayGan}(${saju.dayGanWuxing})
+- 오행 분포(실측): ${wxLine} → ${dominantLine}, ${missingLine}`;
+}
+
+function buildPrompt(name,birthDate,birthHour,gender,calType,mode,saju){
   let photoNote=uploadedPhoto?'첨부된 사진을 참고하여 인물의 외모적 특징을 분석에 반영하세요.':'사진 없이 사주 정보만으로 분석하세요.';
   if(mode==='face'){
     photoNote='첨부된 사진 속 인물은 실제 사람이 아닌 가상의 캐릭터입니다. 이 캐릭터의 얼굴을 관상학적으로 분석해주세요.';
   }
+
+  const sajuFacts = formatSajuFacts(saju);
+  const sajuFactsSection = sajuFacts
+    ? `\n[실제 계산된 사주 정보 - 만세력 기준으로 정확히 계산된 값이다. 오행 분포·일간·년주월주일주시주 수치는 절대 다르게 바꾸거나 새로 지어내지 말고 아래 값을 그대로 사용할 것]\n${sajuFacts}\n`
+    : '';
+  const sajuStep1 = sajuFacts
+    ? `1) 위 [실제 계산된 사주 정보]를 그대로 근거로 삼아 일간의 강약, 오행의 과다·부족, 용신·희신·기신을 명리학적으로 해석한다(오행 수치 자체는 절대 다르게 쓰지 말 것). 이 해석을 sajuAnalysis 항목에 60자 내외로 요약해 적는다 (예: "일간 신약, 화 기운 과다, 수가 용신" 식의 구체적 명리 용어 포함). 절대 60자를 넘기지 말 것.`
+    : `1) 먼저 생년월일시(${birthDate}, ${birthHour}, ${gender})로 사주팔자(년주·월주·일주·시주)를 세우고, 일간의 강약, 오행의 과다·부족, 용신·기신을 실제로 추론한다. 이 내부 판단을 sajuAnalysis 항목에 60자 내외로 요약해 적는다 (예: "일간 신약, 목 기운 과다, 금이 용신" 식의 구체적 명리 용어 포함). 절대 60자를 넘기지 말 것.`;
 
   let jsonTemplate, modeInstruction;
 
   if(mode==='past'){
     jsonTemplate=`{"sajuAnalysis":"","era":"","dynasty":"","role":"","socialClass":"","lifeStory":"","relationships":"","death":"","karma":"","talent":"","tragedy":"","legacy":"","pastLifeColor":"","reincarnationSign":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
-
+${sajuFactsSection}
 [작업 순서 - 반드시 지킬 것]
-1) 먼저 생년월일시(${birthDate}, ${birthHour}, ${gender})로 사주팔자(년주·월주·일주·시주)를 세우고, 일간의 강약, 오행의 과다·부족, 용신·기신을 실제로 추론한다. 이 내부 판단을 sajuAnalysis 항목에 60자 내외로 요약해 적는다 (예: "일간 신약, 목 기운 과다, 금이 용신" 식의 구체적 명리 용어 포함). 절대 60자를 넘기지 말 것.
+${sajuStep1}
 2) 그 사주 구조에서 실제로 드러나는 강점뿐 아니라 약점·결핍·흉살도 반드시 반영해서 아래 전생 서사를 구성한다. 사주가 약하거나 오행이 편중되어 있으면 전생도 순탄치 않았던 인물(가난, 몰락, 이른 죽음, 배신, 실패한 야망 등)로 그릴 것.
 3) 신분(role/socialClass)을 무조건 왕족·양반·영웅·고관 등 좋은 신분으로 주지 말 것. 사주 결과에 따라 평민, 노비, 몰락한 양반, 떠돌이, 생계가 어려웠던 인물 등 절반 이상의 경우 평범하거나 고단한 신분이 나오도록 한다.
 4) tragedy·death·karma는 형식적으로 넣는 게 아니라 실제로 무겁고 아프게 서술한다. 모든 사람에게 "결국은 의미 있었다", "교훈을 얻었다" 식으로 미화된 결말을 주지 말 것 — 일부는 해소되지 않은 채 씁쓸하게 끝나도 된다.
@@ -703,9 +787,9 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - 이름: ${name}
 - 생년월일: ${birthDate}
 - 성별: ${gender}
-
+${sajuFactsSection}
 분석 항목:
-- category: 관상 유형 (예: 목형(木形) · 귀인상)
+- category: 관상 유형 (예: 목형(木形) · 귀인상). 반드시 위 오행 분포에서 가장 두드러진 오행을 반영할 것(목 기운이 강하면 목형 등).
 - faceType: 이목구비 전체 특징 한 줄 요약
 - eyeReading: 눈 관상 상세 분석 90자 (눈빛·눈 크기·눈꼬리·운세에 미치는 영향). 절대 90자를 넘기지 말 것.
 - noseReading: 코 관상 상세 분석 60자 (코 높이·코끝·콧방울·재물운 연관)
@@ -727,9 +811,9 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
     jsonTemplate=`{"dayFlow":"","morningRitual":"","avoidAction":"","luckyFood":"","luckyPerson":"","moneyLuck":"","loveLuck":"","healthLuck":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","naeryeok":"","successQuote":"","fortuneTellerComment":""}`;
     modeInstruction=`분석: 오늘의 운세 (기준 날짜: ${todayStr})
 시스템 톤: 명리학에 근거한 중립적이고 객관적인 멘토. 근거 없는 위로나 막연한 균형 맞추기 없이, 실제 판단대로 솔직하게 말한다.
-
+${sajuFactsSection}
 [작업 순서 - 반드시 지킬 것]
-1) 생년월일시(${birthDate}, ${birthHour}, ${gender})로 사주팔자를 세우고 일간의 강약, 오행의 과다·부족, 용신·희신·기신을 판단한다.
+${sajuFacts ? '1) 위 [실제 계산된 사주 정보]를 그대로 근거로 삼아 일간의 강약, 오행의 과다·부족, 용신·희신·기신을 판단한다(오행 수치 자체는 절대 다르게 쓰지 말 것).' : `1) 생년월일시(${birthDate}, ${birthHour}, ${gender})로 사주팔자를 세우고 일간의 강약, 오행의 과다·부족, 용신·희신·기신을 판단한다.`}
 2) 오늘(${todayStr})의 일진(오늘의 천간·지지)이 이 사람의 사주와 용신운/기신운/충(沖)·형(刑)·합(合) 중 무엇에 해당하는지 실제로 따져본다.
 3) 그 판단 결과, 오늘이 이 사람에게 뚜렷하게 좋은 날인지 나쁜 날인지 애매하게 얼버무리지 말고 분명히 밝힌다. 기신운·충·형에 해당하면 dayFlow·cautions·mentorAdvice가 실제로 주의를 요하는 톤이어야 하며, 억지로 좋게 포장하지 않는다. 반대로 용신운이면 그에 맞게 뚜렷이 긍정적으로 쓴다. 모든 사람이 매번 비슷하게 "무난한 하루"로 나오지 않도록, 그날그날의 실제 기복을 반영한다.
 
@@ -751,8 +835,8 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
   }else{
     jsonTemplate=`{"firstMeeting":"","appearance":"","height":"","voice":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","hobby":"","firstGift":"","meetingSeason":"","weddingStyle":"","compatibilityScore":0,"description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
-
-분석: 이 사람의 미래 배우자
+${sajuFactsSection}
+분석: 이 사람의 미래 배우자. 배우자상과 compatibilityScore(궁합 점수)는 위 오행 분포(용신/기신에 해당할 오행이 배우자에게 있는지 등)를 근거로 판단하고, 모든 사람에게 비슷하게 높은 점수를 주지 말 것.
 - firstMeeting: 처음 만나는 상황과 장소
 - appearance: 배우자 외모 묘사 130자 (이목구비·분위기·인상 포함). 절대 130자를 넘기지 말 것.
 - height: 키와 체형 묘사 30자
@@ -1247,6 +1331,7 @@ __TODAY_PAGE2__:
 
 function showError(msg){const el=document.getElementById('errorMsg');el.textContent='⚠ '+msg;el.classList.add('show');}
 </script>
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
