@@ -675,17 +675,17 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - dynasty: 왕조/국가명 (예: 조선, 고려, 신라, 발해, 고구려, 가야, 일제강점기 등)
 - role: 전생의 신분/직업 (구체적으로)
 - socialClass: 계급 상세 (양반/중인/평민/천민 중 하나 + 구체적 설명)
-- lifeStory: 유년기부터 중년까지 인생 흐름 서술 90자 (기쁨과 고난을 균형 있게 포함하여 사실적으로, 간결하게)
-- relationships: 전생의 핵심 인연(은인/원수/사랑 등) 70자
-- death: 어떤 죽음을 맞았는지, 마지막 감정 60자 (담담하고 중립적으로 서술)
-- karma: 전생에서 현생으로 이어진 업보 60자 (현생에 미치는 영향을 긍정·부정 균형 있게 언급)
+- lifeStory: 유년기부터 중년까지 인생 흐름 서술 100자 (기쁨과 고난을 균형 있게 포함하여 사실적으로). 절대 100자를 넘기지 말 것.
+- relationships: 전생의 핵심 인연(은인/원수/사랑 등) 80자. 절대 80자를 넘기지 말 것.
+- death: 어떤 죽음을 맞았는지, 마지막 감정 70자 (담담하고 중립적으로 서술). 절대 70자를 넘기지 말 것.
+- karma: 전생에서 현생으로 이어진 업보 70자 (현생에 미치는 영향을 긍정·부정 균형 있게 언급). 절대 70자를 넘기지 말 것.
 - talent: 전생의 특별한 재능이나 능력 40자
-- tragedy: 전생의 가장 큰 시련이나 비극 60자
+- tragedy: 전생의 가장 큰 시련이나 비극 70자. 절대 70자를 넘기지 말 것.
 - legacy: 후세에 남긴 흔적이나 영향 40자
 - pastLifeColor: 전생을 상징하는 색깔과 그 이유 40자
-- reincarnationSign: 현생에서 전생의 기억이 깨어나는 순간들 60자 (데자뷰, 특정 감각, 반복되는 꿈 등 구체적으로)
-- description: 전생 삶에 대한 시적이고 신비로운 서술 130자 내외. 절대 130자를 넘기지 말 것.
-- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 100자 내외 (업보의 긍정적 측면과 주의할 점을 균형 있게). 절대 100자를 넘기지 말 것.
+- reincarnationSign: 현생에서 전생의 기억이 깨어나는 순간들 70자 (데자뷰, 특정 감각, 반복되는 꿈 등 구체적으로). 절대 70자를 넘기지 말 것.
+- description: 전생 삶에 대한 시적이고 신비로운 서술 180자 내외. 절대 180자를 넘기지 말 것.
+- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 130자 내외 (업보의 긍정적 측면과 주의할 점을 균형 있게). 절대 130자를 넘기지 말 것.
 - keywords: 전생을 상징하는 키워드 4개
 - imagePrompt: 영문 이미지 프롬프트. "Dramatic cinematic portrait: ${gender==='남성'?'male':'female'} figure in [dynasty] Korean historical [era] setting, [role] of [socialClass] class. Authentic period-accurate costume with intricate embroidery. Evokes [talent/key life scene]. Chiaroscuro lighting — warm torch-glow rim light piercing dense shadow. Masterful fusion of Korean ink wash painting and hyperrealistic oil portrait. Gold dust drifting in misty air. Haunting, soulful gaze. Award-winning historical illustration, cinematic composition, 8K ultra detail."`;
   }else if(mode==='face'){
@@ -706,13 +706,13 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - overallAura: 전체적인 기운과 아우라 60자
 - luckyBodyPart: 가장 길한 신체 부위와 그 이유 40자
 - careerBest: 가장 잘 맞는 직업 Top 3 (각각 한 문장 이유 포함, 전체 80자 이내)
-- lifeFlow: 청년기/중년기/말년기 인생 흐름 90자
-- personality: 성격 강점과 보완할 점, 대인관계 특성 70자
-- wealth: 재물운·직업운 60자
-- love: 연애·결혼운 60자
-- caution: 이 관상에서 읽히는 주의할 점과 발전 방향 60자
-- description: 이 캐릭터의 관상에 대한 신비롭고 시적인 서술 130자 내외. 이목구비별 특징, 성격, 운세 흐름 포함. 절대 130자를 넘기지 말 것.
-- fortuneTellerComment: 점술가가 직접("당신의 얼굴에는...") 말하듯 핵심 관상 조언 100자 내외 (강점과 주의할 점을 균형 있게). 절대 100자를 넘기지 말 것.
+- lifeFlow: 청년기/중년기/말년기 인생 흐름 90자. 절대 90자를 넘기지 말 것.
+- personality: 성격 강점과 보완할 점, 대인관계 특성 90자. 절대 90자를 넘기지 말 것.
+- wealth: 재물운·직업운 90자. 절대 90자를 넘기지 말 것.
+- love: 연애·결혼운 90자. 절대 90자를 넘기지 말 것.
+- caution: 이 관상에서 읽히는 주의할 점과 발전 방향 90자. 절대 90자를 넘기지 말 것.
+- description: 이 캐릭터의 관상에 대한 신비롭고 시적인 서술 180자 내외. 이목구비별 특징, 성격, 운세 흐름 포함. 절대 180자를 넘기지 말 것.
+- fortuneTellerComment: 점술가가 직접("당신의 얼굴에는...") 말하듯 핵심 관상 조언 130자 내외 (강점과 주의할 점을 균형 있게). 절대 130자를 넘기지 말 것.
 - keywords: 이 관상을 상징하는 키워드 4개
 - imagePrompt: 영문 이미지 프롬프트. "Mystical face reading portrait of a ${gender==='남성'?'male':'female'}, [overallAura] energy radiating. [category] physiognomy type. Dramatic chiaroscuro lighting — golden spotlight on face, deep shadow background. Ancient Korean divination symbols and zodiac signs subtly glowing in the backdrop. Penetrating, soulful gaze. Fusion of traditional fortune teller aesthetic and contemporary fine art photography. Ultra-detailed 8K, award-winning portrait."`;
   }else if(mode==='today'){
@@ -742,21 +742,21 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 
 분석: 이 사람의 미래 배우자
 - firstMeeting: 처음 만나는 상황과 장소
-- appearance: 배우자 외모 묘사 70자 (이목구비·분위기·인상 포함)
+- appearance: 배우자 외모 묘사 90자 (이목구비·분위기·인상 포함). 절대 90자를 넘기지 말 것.
 - height: 키와 체형 묘사 30자
 - voice: 목소리 특징 40자
 - celebrity: 닮은 한국 연예인 1~2명
-- animalFace: 동물 관상 (예: 여우상) + 한 문장 이유, 40자 이내
-- job: 추측 직업군 2~3가지 + 이유, 60자 이내
-- signs: 만나기 전 나타나는 징조 2~3가지 (길한 신호와 준비할 사항 균형 있게), 60자 이내
-- personality: 배우자 성격 특징 (강점과 보완할 점 모두) 70자
+- animalFace: 동물 관상 (예: 여우상) + 한 문장 이유, 50자 이내
+- job: 추측 직업군 2~3가지 + 이유, 80자 이내. 절대 80자를 넘기지 말 것.
+- signs: 만나기 전 나타나는 징조 2~3가지 (길한 신호와 준비할 사항 균형 있게), 80자 이내. 절대 80자를 넘기지 말 것.
+- personality: 배우자 성격 특징 (강점과 보완할 점 모두) 90자. 절대 90자를 넘기지 말 것.
 - hobby: 취미와 관심사 3가지 (각 한 문장 설명)
 - firstGift: 처음 받을 선물과 그 의미 40자
 - meetingSeason: 만나는 계절과 날씨 묘사 40자
 - weddingStyle: 예상 결혼 스타일 40자
 - compatibilityScore: 이 사람과의 사주 궁합 점수 (0~100 정수)
-- description: 미래 배우자에 대한 신비로운 서술 130자 내외. (긍정적 면모와 함께할 때 주의할 점을 균형 있게 포함하여 사실적으로) 절대 130자를 넘기지 말 것.
-- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 100자 내외 (인연의 아름다움과 함께 성숙한 관계를 위한 조언 균형 있게) 절대 100자를 넘기지 말 것.
+- description: 미래 배우자에 대한 신비로운 서술 180자 내외. (긍정적 면모와 함께할 때 주의할 점을 균형 있게 포함하여 사실적으로) 절대 180자를 넘기지 말 것.
+- fortuneTellerComment: 점술가가 의뢰인에게 직접("당신의 인연은...") 말하듯 인연 조언 130자 내외 (인연의 아름다움과 함께 성숙한 관계를 위한 조언 균형 있게) 절대 130자를 넘기지 말 것.
 - keywords: 이 인연을 상징하는 키워드 4개
 - imagePrompt: 영문 이미지 프롬프트. "Romantic cinematic portrait of a ${gender==='남성'?'beautiful Korean woman':'handsome Korean man'}, [appearance detail], [height/build]. [celebrity]-esque aura. [meetingSeason] golden hour light, soft bokeh background evoking [meeting place]. Warm, approachable expression — genuine smile with a hint of mystery. Editorial fashion photography meets fine art portrait. Ultra-detailed 8K, award-winning photography, dreamy romantic atmosphere."`;
   }
@@ -987,8 +987,10 @@ async function exportPDF(){
       <div class="pdf-info-blocks">
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 흐르던 생의 기록: </span><span class="pdf-info-text">${tr(parsed.lifeStory)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 얽매인 전생의 인연: </span><span class="pdf-info-text">${tr(parsed.relationships)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 가장 큰 시련: </span><span class="pdf-info-text">${tr(parsed.tragedy)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 생의 마감: </span><span class="pdf-info-text">${tr(parsed.death)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 현생으로 이어진 업보: </span><span class="pdf-info-text">${tr(parsed.karma)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 현생에 깨어나는 순간: </span><span class="pdf-info-text">${tr(parsed.reincarnationSign)}</span></div>
       </div>
       <div class="pdf-fortune"><div class="pdf-fortune-label">✦ 점술가의 말</div><div class="pdf-fortune-text">${tr(parsed.fortuneTellerComment)}</div></div>
       <div class="pdf-tags">${tagsHtml}</div>`;
@@ -999,7 +1001,9 @@ async function exportPDF(){
       <div class="pdf-img-wrap">${imgHtml}</div>
       <div class="pdf-desc">${tr(parsed.description)}</div>
       <div class="pdf-info-blocks">
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 이목구비 특징: </span><span class="pdf-info-text">${tr(parsed.faceType)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 내면의 성향: </span><span class="pdf-info-text">${tr(parsed.personality)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 인생의 큰 흐름: </span><span class="pdf-info-text">${tr(parsed.lifeFlow)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 재물 및 직업운: </span><span class="pdf-info-text">${tr(parsed.wealth)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 애정 및 결혼운: </span><span class="pdf-info-text">${tr(parsed.love)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 삶의 주의점: </span><span class="pdf-info-text">${tr(parsed.caution)}</span></div>
@@ -1063,8 +1067,10 @@ __TODAY_PAGE2__:
       <div class="pdf-img-wrap">${imgHtml}</div>
       <div class="pdf-desc">${tr(parsed.description)}</div>
       <div class="pdf-info-blocks">
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 외모: </span><span class="pdf-info-text">${tr(parsed.appearance)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 닮은꼴 연예인: </span><span class="pdf-info-text">${tr(parsed.celebrity)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 동물 관상: </span><span class="pdf-info-text">${tr(parsed.animalFace)}</span></div>
+        <div class="pdf-info-block"><span class="pdf-info-title">✦ 성격: </span><span class="pdf-info-text">${tr(parsed.personality)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 예상 직업군: </span><span class="pdf-info-text">${tr(parsed.job)}</span></div>
         <div class="pdf-info-block"><span class="pdf-info-title">✦ 만나기 전의 징조: </span><span class="pdf-info-text">${tr(parsed.signs)}</span></div>
       </div>
@@ -1109,6 +1115,8 @@ __TODAY_PAGE2__:
       <tr><td>성별</td><td>${gender}</td></tr>
       <tr><td>분석일</td><td>${today}</td></tr>
     </table>`;
+  // 전생/관상/배우자 리포트는 기본정보 표 대신 헤더 한 줄에 이름·생년월일만 압축 표기해 본문 공간을 확보
+  const pdfHeaderCompactHtml = `<div class="pdf-header"><div class="pdf-title">운명의 거울</div><div class="pdf-subtitle">${name}님 · ${birthDate}(${calType}) · ${today}</div></div>`;
 
   let pagesHtml;
   if(mode === 'today' && bodyHtml.startsWith('__TODAY_PAGE1__:')){
@@ -1127,7 +1135,7 @@ __TODAY_PAGE2__:
   } else {
     pagesHtml = `
       <div class="pdf-page">
-        ${pdfHeaderHtml}${pdfInfoTableHtml}${bodyHtml}
+        ${pdfHeaderCompactHtml}${bodyHtml}
         <div class="pdf-footer">전체 결과는 운명의 거울 앱에서 확인하세요 · 사주 분석 결과 · ${today}</div>
       </div>`;
   }
