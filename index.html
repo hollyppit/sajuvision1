@@ -726,21 +726,26 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
     const todayStr=new Date().toLocaleDateString('ko-KR');
     jsonTemplate=`{"dayFlow":"","morningRitual":"","avoidAction":"","luckyFood":"","luckyPerson":"","moneyLuck":"","loveLuck":"","healthLuck":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","naeryeok":"","successQuote":"","fortuneTellerComment":""}`;
     modeInstruction=`분석: 오늘의 운세 (기준 날짜: ${todayStr})
-시스템 톤: 명리학에 근거한 중립적이고 객관적인 멘토. 긍정적 기운과 주의할 기운을 균형 있게 분석. 현실적 조언 중심.
+시스템 톤: 명리학에 근거한 중립적이고 객관적인 멘토. 근거 없는 위로나 막연한 균형 맞추기 없이, 실제 판단대로 솔직하게 말한다.
 
-- dayFlow: 오늘 하루 전체적인 기운 흐름 (2~3문장, 길한 기운과 흉한 기운을 균형 있게)
+[작업 순서 - 반드시 지킬 것]
+1) 생년월일시(${birthDate}, ${birthHour}, ${gender})로 사주팔자를 세우고 일간의 강약, 오행의 과다·부족, 용신·희신·기신을 판단한다.
+2) 오늘(${todayStr})의 일진(오늘의 천간·지지)이 이 사람의 사주와 용신운/기신운/충(沖)·형(刑)·합(合) 중 무엇에 해당하는지 실제로 따져본다.
+3) 그 판단 결과, 오늘이 이 사람에게 뚜렷하게 좋은 날인지 나쁜 날인지 애매하게 얼버무리지 말고 분명히 밝힌다. 기신운·충·형에 해당하면 dayFlow·cautions·mentorAdvice가 실제로 주의를 요하는 톤이어야 하며, 억지로 좋게 포장하지 않는다. 반대로 용신운이면 그에 맞게 뚜렷이 긍정적으로 쓴다. 모든 사람이 매번 비슷하게 "무난한 하루"로 나오지 않도록, 그날그날의 실제 기복을 반영한다.
+
+- dayFlow: 오늘 하루 전체적인 기운 흐름 (2~3문장). 2)의 판단에 따라 길하면 길하게, 흉하면 분명히 흉하게 쓸 것 — 매번 균형을 맞추지 말 것.
 - morningRitual: 오늘 아침 반드시 해야 할 구체적 행동 1가지 (예: "동쪽 창문을 열고 햇빛 5분 쐬기") 50자
 - avoidAction: 오늘 절대 피해야 할 행동과 그 이유 50자
 - luckyFood: 오늘의 행운 음식과 기운적 효과 30자
 - luckyPerson: 오늘 함께하면 좋은 사람 유형 50자
-- moneyLuck: 재물운 상세 분석 100자 (투자·지출·수입 관련 구체적 조언)
+- moneyLuck: 재물운 상세 분석 100자 (투자·지출·수입 관련 구체적 조언. 흉일이면 지출·투자 자제 등 구체적 경고 포함)
 - loveLuck: 연애운 상세 분석 100자 (현재 관계 또는 새 인연 관련 구체적 조언)
 - healthLuck: 건강운 상세 분석 100자 (주의할 신체 부위, 오늘 권장 활동)
 - luckyElements: 행운 요소 5개 (색상, 방향, 음식, 시간대, 행운의 말)
-- cautions: 주의 항목 3개 (제목+설명)
-- hourlyFlow: 06시부터 22시까지 2시간 간격 9개 데이터 (score는 0~100)
-- mentorAdvice: 명리학적 근거의 오늘 핵심 조언 (3~4문장. 현실적이고 직설적으로. 긍정·부정 균형 있게.)
-- naeryeok: 이 사람의 사주 천간·지지·오행을 바탕으로 오늘의 기운을 명리학적으로 해석 (2~3문장. 용신·희신·기신 등 구체적 명리 용어 포함.)
+- cautions: 주의 항목 3개 (제목+설명). 오늘이 흉일에 가까우면 형식적인 주의가 아니라 실제로 구체적이고 무게감 있는 주의를 담을 것.
+- hourlyFlow: 06시부터 22시까지 2시간 간격 9개 데이터 (score는 0~100. 2)의 판단을 반영해 굴곡을 뚜렷하게 표현, 모든 시간대가 평이하게 나오지 않도록)
+- mentorAdvice: 명리학적 근거의 오늘 핵심 조언 (3~4문장. 현실적이고 직설적으로. 2)의 판단과 일관되게.)
+- naeryeok: 1)·2)의 명리학적 판단을 구체적으로 서술 (2~3문장. 일간 강약·용신/기신·오늘 일진과의 관계·오늘이 길일인지 흉일인지를 명확히 명시. 용신·희신·기신 등 구체적 명리 용어 포함.)
 - successQuote: 오늘의 사주 기운과 어울리는 동서양 성공 격언 또는 명언 1개 (한국어로, 출처·인물명 포함)
 - fortuneTellerComment: 점술가 스타일의 마무리 한 줄`;
   }else{
