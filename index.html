@@ -689,7 +689,7 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - keywords: 전생을 상징하는 키워드 4개
 - imagePrompt: 영문 이미지 프롬프트. "Dramatic cinematic portrait: ${gender==='남성'?'male':'female'} figure in [dynasty] Korean historical [era] setting, [role] of [socialClass] class. Authentic period-accurate costume with intricate embroidery. Evokes [talent/key life scene]. Chiaroscuro lighting — warm torch-glow rim light piercing dense shadow. Masterful fusion of Korean ink wash painting and hyperrealistic oil portrait. Gold dust drifting in misty air. Haunting, soulful gaze. Award-winning historical illustration, cinematic composition, 8K ultra detail."`;
   }else if(mode==='face'){
-    jsonTemplate=`{"category":"","faceType":"","eyeReading":"","noseReading":"","mouthReading":"","earsReading":"","overallAura":"","luckyBodyPart":"","careerBest":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate=`{"category":"","faceType":"","eyeReading":"","noseReading":"","mouthReading":"","overallAura":"","luckyBodyPart":"","careerBest":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 
 [사주 참고 정보]
@@ -703,7 +703,6 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - eyeReading: 눈 관상 상세 분석 80자 (눈빛·눈 크기·눈꼬리·운세에 미치는 영향)
 - noseReading: 코 관상 상세 분석 80자 (코 높이·코끝·콧방울·재물운 연관)
 - mouthReading: 입 관상 상세 분석 80자 (입술 두께·입꼬리·언변운)
-- earsReading: 귀 관상 상세 분석 80자 (귀 크기·귀 모양·수복운 연관)
 - overallAura: 전체적인 기운과 아우라 80자
 - luckyBodyPart: 가장 길한 신체 부위와 그 이유 50자
 - careerBest: 가장 잘 맞는 직업 Top 3 (각각 한 문장 이유 포함)
@@ -866,7 +865,6 @@ function renderFaceResult(data,imgUrl){
     ${data.eyeReading?`<div class="info-block"><div class="info-block-title"><i>✦</i> 눈 관상</div><div class="info-block-text">${esc(data.eyeReading)}</div></div>`:''}
     ${data.noseReading?`<div class="info-block"><div class="info-block-title"><i>✦</i> 코 관상</div><div class="info-block-text">${esc(data.noseReading)}</div></div>`:''}
     ${data.mouthReading?`<div class="info-block"><div class="info-block-title"><i>✦</i> 입 관상</div><div class="info-block-text">${esc(data.mouthReading)}</div></div>`:''}
-    ${data.earsReading?`<div class="info-block"><div class="info-block-title"><i>✦</i> 귀 관상</div><div class="info-block-text">${esc(data.earsReading)}</div></div>`:''}
     ${data.overallAura?`<div class="info-block"><div class="info-block-title"><i>✦</i> 전체 기운과 아우라</div><div class="info-block-text">${esc(data.overallAura)}</div></div>`:''}
     ${data.luckyBodyPart?`<div class="info-block"><div class="info-block-title"><i>✦</i> 가장 길한 신체 부위</div><div class="info-block-text">${esc(data.luckyBodyPart)}</div></div>`:''}
     ${data.careerBest?`<div class="info-block"><div class="info-block-title"><i>✦</i> 가장 잘 맞는 직업 Top 3</div><div class="info-block-text">${esc(data.careerBest)}</div></div>`:''}
