@@ -228,7 +228,7 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - keywords: 전생을 상징하는 키워드 6개
 - imagePrompt: 영문 이미지 프롬프트. "${gender==='남성'?'Male':'Female'} figure in [era] Korean historical setting, [role], dramatic lighting, ink wash painting style, mysterious atmosphere, 8k"`;
   } else if (mode === 'face') {
-    jsonTemplate = `{"category":"","faceType":"","forehead":"","eyes":"","nose":"","mouth":"","earsAndJaw":"","fiveElements":"","youthFlow":"","middleFlow":"","lateFlow":"","personality":"","strength":"","weakness":"","wealth":"","career":"","love":"","health":"","socialLuck":"","caution":"","growthDirection":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate = `{"category":"","faceType":"","forehead":"","eyes":"","nose":"","mouth":"","jaw":"","fiveElements":"","youthFlow":"","middleFlow":"","lateFlow":"","personality":"","strength":"","weakness":"","wealth":"","career":"","love":"","health":"","socialLuck":"","caution":"","growthDirection":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction = `
 분석: 관상 분석 (각 항목 구체적·풍부하게)
 - category: 관상 유형 명칭
@@ -237,7 +237,7 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode){
 - eyes: 눈(감정·지혜의 창) 분석 100자
 - nose: 코(재물궁) 분석 80자
 - mouth: 입(복록궁·언변) 분석 80자
-- earsAndJaw: 귀와 턱(말년운·의지력) 분석 100자
+- jaw: 턱(말년운·의지력) 분석 100자
 - fiveElements: 오행 관상 분류와 그 의미 100자
 - youthFlow: 청년기(20~30대) 운세 흐름 120자
 - middleFlow: 중년기(40~50대) 운세 흐름 120자
@@ -366,7 +366,7 @@ function displayResult(data,imgUrl,mode){
         <div class="info-block"><div class="info-block-title"><i>✦</i> 눈</div><div class="info-block-text">${data.eyes||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 코(재물궁)</div><div class="info-block-text">${data.nose||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 입(복록궁)</div><div class="info-block-text">${data.mouth||''}</div></div>
-        <div class="info-block"><div class="info-block-title"><i>✦</i> 귀와 턱</div><div class="info-block-text">${data.earsAndJaw||''}</div></div>
+        <div class="info-block"><div class="info-block-title"><i>✦</i> 턱</div><div class="info-block-text">${data.jaw||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 청년기 운세</div><div class="info-block-text">${data.youthFlow||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 중년기 운세</div><div class="info-block-text">${data.middleFlow||''}</div></div>
         <div class="info-block"><div class="info-block-title"><i>✦</i> 말년기 운세</div><div class="info-block-text">${data.lateFlow||''}</div></div>
