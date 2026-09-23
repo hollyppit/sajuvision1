@@ -148,6 +148,28 @@ select option{background:#1a1008;}
 .chart-title { font-size: 13px; color: var(--gold); margin-bottom: 20px; text-align: center; letter-spacing: 2px; }
 
 .compat-bar-bg{height:8px;background:rgba(255,255,255,.08);border-radius:4px;margin:8px 0;overflow:hidden;}
+.ilju-panel{border:1px solid rgba(201,150,58,.45);background:linear-gradient(160deg,rgba(201,150,58,.10),rgba(139,26,26,.06));padding:22px 18px 18px;margin-bottom:24px;text-align:center;}
+.ilju-label{font-size:10px;color:var(--gold);letter-spacing:3px;opacity:.75;margin-bottom:8px;}
+.ilju-name{display:flex;align-items:baseline;justify-content:center;gap:10px;margin-bottom:4px;}
+.ilju-hanja{font-family:'Nanum Myeongjo',serif;font-size:38px;font-weight:800;color:var(--gold-light);letter-spacing:4px;}
+.ilju-kr{font-family:'Nanum Myeongjo',serif;font-size:18px;color:var(--paper);letter-spacing:2px;}
+.ilju-symbol{font-size:12px;color:var(--mist);letter-spacing:2px;opacity:.75;margin-bottom:16px;}
+.pillar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:0 auto 14px;max-width:360px;}
+.pillar-col{border:1px solid rgba(201,150,58,.15);padding:6px 2px;}
+.pillar-col.is-day{border-color:var(--gold);background:rgba(201,150,58,.12);}
+.pillar-label{font-size:10px;color:var(--mist);opacity:.7;letter-spacing:1px;margin-bottom:3px;}
+.pillar-col.is-day .pillar-label{color:var(--gold-light);opacity:1;font-weight:700;}
+.pillar-god{font-size:10px;color:rgba(212,201,184,.65);margin:2px 0;}
+.pillar-char{font-family:'Nanum Myeongjo',serif;font-size:24px;font-weight:700;line-height:1.2;margin:3px 0;}
+.pillar-char small{display:block;font-family:'Gowun Batang',serif;font-size:9px;font-weight:400;opacity:.75;}
+.pillar-empty{color:rgba(212,201,184,.3);}
+.wx-wood{color:#7fc48a;}.wx-fire{color:#e8806a;}.wx-earth{color:#e0bd6a;}.wx-metal{color:#e6e2da;}.wx-water{color:#7aa6d8;}
+.ilju-facts{font-size:12.5px;line-height:1.9;color:rgba(245,240,232,.78);margin-bottom:8px;word-break:keep-all;}
+.ilju-facts b{color:var(--gold);font-weight:400;margin-right:3px;}
+.ilju-badges{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:10px 0 4px;}
+.ilju-badge{padding:3px 10px;border:1px solid rgba(201,150,58,.4);font-size:11px;color:var(--gold-light);letter-spacing:1px;}
+.ilju-reading{margin-top:14px;padding-top:14px;border-top:1px solid rgba(201,150,58,.2);font-size:14px;line-height:2;color:rgba(245,240,232,.88);text-align:left;word-break:keep-all;}
+.ilju-note{margin-top:10px;font-size:10.5px;color:var(--mist);opacity:.55;}
 .compat-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width 1.2s ease;}
 #printArea{display:none;}
 
@@ -370,6 +392,7 @@ select option{background:#1a1008;}
     <div class="result-card" id="todayCard" style="display:none;">
       <div class="result-card-title">오늘의 행운 솔루션<small>TODAY'S LUCK SOLUTION</small></div>
       <div class="result-meta" id="todayMeta"></div>
+      <div id="todayIljuPanel"></div>
       <div class="result-desc" id="todayFlow" style="border-left:none; padding-left:0; text-align:center; font-size:18px; font-weight:700; color:var(--gold-light);"></div>
 
       <div class="today-lucky-grid" id="todayLuckyElements"></div>
@@ -601,6 +624,7 @@ async function startReveal(){
     const [by, bm, bd] = birthDate.split('-').map(Number);
     const isLeapMonth = calType==='음력' && document.getElementById('isLeapMonth').checked;
     const saju = computeSaju(by, bm, bd, birthHour, calType, isLeapMonth);
+    if(saju && currentMode==='today') saju.todayIljin = computeTodayIljin(saju);
     const prompt = buildPrompt(name, birthDate, birthHour, gender, calType, currentMode, saju);
 
     // Cloudflare Function 호출 (분석)
@@ -626,7 +650,7 @@ async function startReveal(){
       throw new Error(`분석 결과 해석 실패: ${e.message} / 원문: ${text.slice(0, 300)}`);
     }
 
-    lastResult = { parsed, name, birthDate, birthHour, gender, calType, mode: currentMode };
+    lastResult = { parsed, name, birthDate, birthHour, gender, calType, mode: currentMode, saju };
 
     let imgUrl = null;
 
@@ -677,6 +701,124 @@ async function startReveal(){
 // AI가 사주를 임의로 지어내면서 생기는 오류(오행/일간 오답 등)를 막기 위해
 // 년주·월주·일주·시주와 오행 분포를 코드로 직접 계산해 AI에게 사실로 전달한다.
 // =============================================
+const GAN_KR={'甲':'갑','乙':'을','丙':'병','丁':'정','戊':'무','己':'기','庚':'경','辛':'신','壬':'임','癸':'계'};
+const ZHI_KR={'子':'자','丑':'축','寅':'인','卯':'묘','辰':'진','巳':'사','午':'오','未':'미','申':'신','酉':'유','戌':'술','亥':'해'};
+const GAN_WX={'甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수'};
+const ZHI_WX={'子':'수','丑':'토','寅':'목','卯':'목','辰':'토','巳':'화','午':'화','未':'토','申':'금','酉':'금','戌':'토','亥':'수'};
+const GAN_YANG='甲丙戊庚壬';
+// 지지 지장간 본기(本氣) — 지지의 십성은 본기 기준으로 본다
+const ZHI_MAIN_GAN={'子':'癸','丑':'己','寅':'甲','卯':'乙','辰':'戊','巳':'丙','午':'丁','未':'己','申':'庚','酉':'辛','戌':'戊','亥':'壬'};
+const WX_GEN={목:'화',화:'토',토:'금',금:'수',수:'목'};
+const WX_CTRL={목:'토',토:'수',수:'화',화:'금',금:'목'};
+const WX_CLASS={목:'wood',화:'fire',토:'earth',금:'metal',수:'water'};
+const DISHI_KR={'长生':'장생','沐浴':'목욕','冠带':'관대','临官':'건록','帝旺':'제왕','衰':'쇠','病':'병','死':'사','墓':'묘','绝':'절','胎':'태','养':'양'};
+const NAYIN_KR={'海中金':'해중금','炉中火':'노중화','大林木':'대림목','路旁土':'노방토','剑锋金':'검봉금','山头火':'산두화','涧下水':'간하수','城头土':'성두토','白蜡金':'백랍금','杨柳木':'양류목','泉中水':'천중수','屋上土':'옥상토','霹雳火':'벽력화','松柏木':'송백목','长流水':'장류수','沙中金':'사중금','山下火':'산하화','平地木':'평지목','壁上土':'벽상토','金箔金':'금박금','覆灯火':'복등화','天河水':'천하수','大驿土':'대역토','钗钏金':'차천금','桑柘木':'상자목','大溪水':'대계수','沙中土':'사중토','天上火':'천상화','石榴木':'석류목','大海水':'대해수'};
+const NAYIN_HANJA={'炉':'爐','剑':'劍','锋':'鋒','头':'頭','涧':'澗','蜡':'蠟','杨':'楊','雳':'靂','长':'長','灯':'燈','驿':'驛','钗':'釵','钏':'釧'};
+const GAN_COLOR={'甲':'푸른','乙':'푸른','丙':'붉은','丁':'붉은','戊':'황금','己':'황금','庚':'하얀','辛':'하얀','壬':'검은','癸':'검은'};
+const GAN_COLOR_EN={'甲':'deep azure blue','乙':'jade green','丙':'crimson red','丁':'warm vermilion','戊':'golden ochre','己':'earthy amber','庚':'silver white','辛':'pearl white','壬':'midnight black','癸':'ink black'};
+const ZHI_ANIMAL={'子':'쥐','丑':'소','寅':'호랑이','卯':'토끼','辰':'용','巳':'뱀','午':'말','未':'양','申':'원숭이','酉':'닭','戌':'개','亥':'돼지'};
+const GOEGANG=['庚辰','庚戌','壬辰','壬戌','戊戌'];
+const BAEKHO=['甲辰','乙未','丙戌','丁丑','戊辰','壬戌','癸丑'];
+const GAN_HAP={'甲己':'토','乙庚':'금','丙辛':'수','丁壬':'목','戊癸':'화'};
+const GAN_CHUNG=['甲庚','乙辛','丙壬','丁癸'];
+const ZHI_HAP={'子丑':'토','寅亥':'목','卯戌':'화','辰酉':'금','巳申':'수','午未':'화'};
+const ZHI_CHUNG=['子午','丑未','寅申','卯酉','辰戌','巳亥'];
+const ZHI_HYEONG=['寅巳','巳申','寅申','丑戌','戌未','丑未','子卯'];
+const ZHI_SELF_HYEONG='辰午酉亥';
+const ZHI_HAE=['子未','丑午','寅巳','卯辰','申亥','酉戌'];
+const ZHI_WONJIN=['子未','丑午','寅酉','卯申','辰亥','巳戌'];
+const ZHI_SAMHAP=[['申子辰','수'],['亥卯未','목'],['寅午戌','화'],['巳酉丑','금']];
+
+const pairIn=(list,a,b)=>list.includes(a+b)||list.includes(b+a);
+const pairVal=(map,a,b)=>map[a+b]||map[b+a]||null;
+const ganZhiKr=(g,z)=>`${GAN_KR[g]||g}${ZHI_KR[z]||z}`;
+const nayinLabel=n=>NAYIN_KR[n]?`${NAYIN_KR[n]}(${[...n].map(c=>NAYIN_HANJA[c]||c).join('')})`:n;
+
+// 일간 기준 십성(十星)
+function tenGod(dayGan, other){
+  const a=GAN_WX[dayGan], b=GAN_WX[other];
+  if(!a||!b) return '';
+  const sameYY = GAN_YANG.includes(dayGan)===GAN_YANG.includes(other);
+  if(a===b) return sameYY?'비견':'겁재';
+  if(WX_GEN[a]===b) return sameYY?'식신':'상관';
+  if(WX_CTRL[a]===b) return sameYY?'편재':'정재';
+  if(WX_CTRL[b]===a) return sameYY?'편관':'정관';
+  return sameYY?'편인':'정인';
+}
+
+// 두 간지(일주 vs 일주) 사이의 합·충·형·해·원진 관계를 계산
+function ganZhiRelations(g1,z1,g2,z2){
+  const rel=[];
+  if(g1===g2&&z1===z2) rel.push('복음(伏吟) — 같은 간지가 겹침');
+  const gh=pairVal(GAN_HAP,g1,g2);
+  if(gh) rel.push(`천간합(${g1}${g2}合 ${gh})`);
+  if(pairIn(GAN_CHUNG,g1,g2)) rel.push(`천간충(${g1}${g2}沖)`);
+  const zh=pairVal(ZHI_HAP,z1,z2);
+  if(zh) rel.push(`지지 육합(${z1}${z2}合 ${zh})`);
+  if(z1!==z2){
+    const sam=ZHI_SAMHAP.find(([grp])=>grp.includes(z1)&&grp.includes(z2));
+    if(sam) rel.push(`지지 반합(${z1}${z2} ${sam[1]}국)`);
+  }
+  if(pairIn(ZHI_CHUNG,z1,z2)) rel.push(`지지충(${z1}${z2}沖)`);
+  if(pairIn(ZHI_HYEONG,z1,z2)||(z1===z2&&ZHI_SELF_HYEONG.includes(z1))) rel.push(`지지형(${z1}${z2}刑)`);
+  if(pairIn(ZHI_HAE,z1,z2)) rel.push(`지지해(${z1}${z2}害)`);
+  if(pairIn(ZHI_WONJIN,z1,z2)) rel.push(`원진(${z1}${z2}怨嗔)`);
+  return rel;
+}
+
+// 일주 상세 정보 (명칭·상징·일지 십성·12운성·납음·공망·신살·궁합 일주)
+function buildIljuInfo(ec, dGan, dZhi){
+  const hide=ec.getDayHideGan()||[];
+  const traits=[];
+  if(GOEGANG.includes(dGan+dZhi)) traits.push('괴강살(魁罡)');
+  if(BAEKHO.includes(dGan+dZhi)) traits.push('백호살(白虎)');
+  if(GAN_WX[dGan]===ZHI_WX[dZhi]) traits.push('간여지동(干與支同)');
+  if('子午卯酉'.includes(dZhi)) traits.push('일지 도화(桃花) 기질');
+  else if('寅申巳亥'.includes(dZhi)) traits.push('일지 역마(驛馬) 기질');
+  else traits.push('일지 화개(華蓋) 기질');
+
+  // 천간합 + 지지육합 짝 = 천지합(天地合) 일주, 천간충 + 지지충 짝 = 천극지충(天剋地沖) 일주
+  const GANS='甲乙丙丁戊己庚辛壬癸', ZHIS='子丑寅卯辰巳午未申酉戌亥';
+  const hapGan=[...GANS].find(g=>pairVal(GAN_HAP,dGan,g));
+  const hapZhi=[...ZHIS].find(z=>pairVal(ZHI_HAP,dZhi,z));
+  const chungGan=[...GANS].find(g=>pairIn(GAN_CHUNG,dGan,g));
+  const chungZhi=[...ZHIS].find(z=>pairIn(ZHI_CHUNG,dZhi,z));
+
+  const xk=ec.getDayXunKong()||'';
+  return {
+    hanja: dGan+dZhi,
+    kr: ganZhiKr(dGan,dZhi),
+    ganKr: GAN_KR[dGan], zhiKr: ZHI_KR[dZhi],
+    ganWx: GAN_WX[dGan], zhiWx: ZHI_WX[dZhi],
+    ganYY: GAN_YANG.includes(dGan)?'양':'음',
+    symbol: `${GAN_COLOR[dGan]} ${ZHI_ANIMAL[dZhi]}`,
+    colorEn: GAN_COLOR_EN[dGan],
+    hideGans: hide.map(g=>`${GAN_KR[g]}(${tenGod(dGan,g)})`),
+    spouseGod: tenGod(dGan, ZHI_MAIN_GAN[dZhi]),
+    dishi: DISHI_KR[ec.getDayDiShi()]||ec.getDayDiShi(),
+    nayin: nayinLabel(ec.getDayNaYin()),
+    kongmang: [...xk].map(z=>ZHI_KR[z]||z).join(''),
+    traits,
+    harmonyIlju: hapGan&&hapZhi ? `${ganZhiKr(hapGan,hapZhi)}(${hapGan}${hapZhi})` : null,
+    clashIlju: chungGan&&chungZhi ? `${ganZhiKr(chungGan,chungZhi)}(${chungGan}${chungZhi})` : null
+  };
+}
+
+// 오늘의 일진과 내 일주의 관계 (오늘의 운세용)
+function computeTodayIljin(saju){
+  try{
+    if(!saju||typeof Solar==='undefined') return null;
+    const t=Solar.fromDate(new Date()).getLunar();
+    const g=t.getDayGan(), z=t.getDayZhi();
+    const dg=saju.ilju.gan, dz=saju.ilju.zhi;
+    return {
+      hanja: g+z, kr: ganZhiKr(g,z),
+      ganGod: tenGod(dg,g), zhiGod: tenGod(dg,ZHI_MAIN_GAN[z]),
+      relations: ganZhiRelations(dg,dz,g,z)
+    };
+  }catch(e){ console.error('일진 계산 오류', e); return null; }
+}
+
 function computeSaju(y, m, d, birthHourStr, calType, isLeapMonth){
   try{
     if(typeof Lunar==='undefined' || typeof Solar==='undefined') return null;
@@ -701,11 +843,6 @@ function computeSaju(y, m, d, birthHourStr, calType, isLeapMonth){
     }
     const ec = lunar.getEightChar();
 
-    const GAN_KR={'甲':'갑','乙':'을','丙':'병','丁':'정','戊':'무','己':'기','庚':'경','辛':'신','壬':'임','癸':'계'};
-    const ZHI_KR={'子':'자','丑':'축','寅':'인','卯':'묘','辰':'진','巳':'사','午':'오','未':'미','申':'신','酉':'유','戌':'술','亥':'해'};
-    const GAN_WX={'甲':'목','乙':'목','丙':'화','丁':'화','戊':'토','己':'토','庚':'금','辛':'금','壬':'수','癸':'수'};
-    const ZHI_WX={'子':'수','丑':'토','寅':'목','卯':'목','辰':'토','巳':'화','午':'화','未':'토','申':'금','酉':'금','戌':'토','亥':'수'};
-
     const yGan=ec.getYearGan(), yZhi=ec.getYearZhi();
     const mGan=ec.getMonthGan(), mZhi=ec.getMonthZhi();
     const dGan=ec.getDayGan(), dZhi=ec.getDayZhi();
@@ -717,25 +854,40 @@ function computeSaju(y, m, d, birthHourStr, calType, isLeapMonth){
     gans.forEach(g=>{ if(GAN_WX[g]) wxCount[GAN_WX[g]]++; });
     zhis.forEach(z=>{ if(ZHI_WX[z]) wxCount[ZHI_WX[z]]++; });
 
-    const toKr=(g,z)=>`${GAN_KR[g]||g}${ZHI_KR[z]||z}`;
     const pillars={
-      year: toKr(yGan,yZhi),
-      month: toKr(mGan,mZhi),
-      day: toKr(dGan,dZhi),
-      time: hourKnown?toKr(tGan,tZhi):'시간 미상(미반영)'
+      year: ganZhiKr(yGan,yZhi),
+      month: ganZhiKr(mGan,mZhi),
+      day: ganZhiKr(dGan,dZhi),
+      time: hourKnown?ganZhiKr(tGan,tZhi):'시간 미상(미반영)'
     };
+    // 화면 표시용 원국(原局): 시·일·월·년 순서
+    const pillarCols=[
+      {label:'시주', gan:tGan, zhi:tZhi},
+      {label:'일주', gan:dGan, zhi:dZhi, isDay:true},
+      {label:'월주', gan:mGan, zhi:mZhi},
+      {label:'년주', gan:yGan, zhi:yZhi}
+    ].map(c=>({...c,
+      ganGod: c.gan ? (c.isDay?'일간(나)':tenGod(dGan,c.gan)) : '',
+      zhiGod: c.zhi ? tenGod(dGan,ZHI_MAIN_GAN[c.zhi]) : ''
+    }));
     const missing = Object.entries(wxCount).filter(([,v])=>v===0).map(([k])=>k);
     const sorted = Object.entries(wxCount).sort((a,b)=>b[1]-a[1]);
     const dominant = sorted[0][1]>0 ? sorted[0][0] : null;
 
+    const ilju = buildIljuInfo(ec, dGan, dZhi);
+    ilju.gan = dGan; ilju.zhi = dZhi;
+
     return {
       pillars,
+      pillarCols,
       dayGan: GAN_KR[dGan]||dGan,
       dayGanWuxing: GAN_WX[dGan]||'',
       wxCount,
       missing,
       dominant,
-      hourKnown
+      hourKnown,
+      jasi: hourKnown && birthHourStr.charAt(0)==='자',
+      ilju
     };
   }catch(e){
     console.error('사주 계산 오류', e);
@@ -750,9 +902,39 @@ function formatSajuFacts(saju){
   const wxLine = `목${wx.목} 화${wx.화} 토${wx.토} 금${wx.금} 수${wx.수}`;
   const missingLine = saju.missing.length ? `${saju.missing.join('·')} 기운 없음` : '오행 결핍 없음';
   const dominantLine = saju.dominant ? `${saju.dominant} 기운 과다` : '뚜렷한 편중 없음';
+  const j = saju.ilju;
+  const godLine = saju.pillarCols
+    .filter(c=>c.gan)
+    .map(c=>`${c.label} ${GAN_KR[c.gan]}${ZHI_KR[c.zhi]}(천간 ${c.ganGod} / 지지 ${c.zhiGod})`)
+    .join(', ');
   return `- 년주: ${saju.pillars.year} / 월주: ${saju.pillars.month} / 일주: ${saju.pillars.day} / 시주: ${saju.pillars.time}
 - 일간(본인): ${saju.dayGan}(${saju.dayGanWuxing})
-- 오행 분포(실측): ${wxLine} → ${dominantLine}, ${missingLine}`;
+- 오행 분포(실측): ${wxLine} → ${dominantLine}, ${missingLine}
+- 십성 배치(일간 기준): ${godLine}
+
+[일주(日柱) 핵심 정보 - 이번 분석의 중심축]
+- 일주: ${j.kr}(${j.hanja})일주 · 상징: ${j.symbol}
+- 일간: ${j.ganKr}(${j.gan}) ${j.ganYY}${j.ganWx} → 나 자신의 본질·기질
+- 일지: ${j.zhiKr}(${j.zhi}) ${j.zhiWx} → 나의 내면·생활 기반·배우자궁
+- 일지 지장간: ${j.hideGans.join(', ')}
+- 배우자궁(일지 본기) 십성: ${j.spouseGod}
+- 12운성(일간이 일지에서): ${j.dishi}
+- 일주 납음: ${j.nayin}
+- 일주 공망: ${j.kongmang}
+- 일주 특성: ${j.traits.join(', ')}`;
+}
+
+// 모든 메뉴에 공통으로 들어가는 일주 중심 분석 원칙
+function iljuPrinciple(saju){
+  if(!saju) return '';
+  const j=saju.ilju;
+  return `
+[일주 중심 분석 원칙 - 모든 항목에 적용]
+- 이 분석의 중심축은 만세력으로 계산된 ${j.kr}(${j.hanja})일주다. 일주 명칭·일간·일지·지장간·십성·12운성·납음·공망은 위 계산값을 그대로 쓰고, 절대 다른 일주로 바꾸거나 새로 계산하지 말 것.
+- '나 자신' = 일간 ${j.ganKr}${j.ganWx}(${j.gan}), '나의 내면·배우자궁' = 일지 ${j.zhiKr}${j.zhiWx}(${j.zhi}, ${j.spouseGod}). 모든 서술(성격·재능·인연·운의 흐름)은 이 일주의 기질에서 출발해 풀어내고, 년·월·시주와 오행 분포는 일주를 보강하는 보조 근거로만 사용한다.
+- 12운성 ${j.dishi}, ${j.traits.join('·')}이(가) 결과에 실제로 드러나도록 반영할 것.
+- iljuReading 항목에는 반드시 "${j.kr}일주"라는 명칭을 넣어 설명할 것.
+`;
 }
 
 function buildPrompt(name,birthDate,birthHour,gender,calType,mode,saju){
@@ -763,8 +945,11 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode,saju){
 
   const sajuFacts = formatSajuFacts(saju);
   const sajuFactsSection = sajuFacts
-    ? `\n[실제 계산된 사주 정보 - 만세력 기준으로 정확히 계산된 값이다. 오행 분포·일간·년주월주일주시주 수치는 절대 다르게 바꾸거나 새로 지어내지 말고 아래 값을 그대로 사용할 것]\n${sajuFacts}\n`
+    ? `\n[실제 계산된 사주 정보 - 만세력 기준으로 정확히 계산된 값이다. 오행 분포·일간·년주월주일주시주 수치는 절대 다르게 바꾸거나 새로 지어내지 말고 아래 값을 그대로 사용할 것]\n${sajuFacts}\n${iljuPrinciple(saju)}`
     : '';
+  const j = saju ? saju.ilju : null;
+  // 일주 해석 항목은 만세력 계산이 성공했을 때만 요청 (JSON 맨 앞에 두어 AI가 일주부터 판단하게 함)
+  const iljuKey = j ? '"iljuReading":"",' : '';
   const sajuStep1 = sajuFacts
     ? `1) 위 [실제 계산된 사주 정보]를 그대로 근거로 삼아 일간의 강약, 오행의 과다·부족, 용신·희신·기신을 명리학적으로 해석한다(오행 수치 자체는 절대 다르게 쓰지 말 것). 이 해석을 sajuAnalysis 항목에 60자 내외로 요약해 적는다 (예: "일간 신약, 화 기운 과다, 수가 용신" 식의 구체적 명리 용어 포함). 절대 60자를 넘기지 말 것.`
     : `1) 먼저 생년월일시(${birthDate}, ${birthHour}, ${gender})로 사주팔자(년주·월주·일주·시주)를 세우고, 일간의 강약, 오행의 과다·부족, 용신·기신을 실제로 추론한다. 이 내부 판단을 sajuAnalysis 항목에 60자 내외로 요약해 적는다 (예: "일간 신약, 목 기운 과다, 금이 용신" 식의 구체적 명리 용어 포함). 절대 60자를 넘기지 말 것.`;
@@ -772,7 +957,7 @@ function buildPrompt(name,birthDate,birthHour,gender,calType,mode,saju){
   let jsonTemplate, modeInstruction;
 
   if(mode==='past'){
-    jsonTemplate=`{"sajuAnalysis":"","era":"","dynasty":"","role":"","socialClass":"","lifeStory":"","relationships":"","death":"","karma":"","talent":"","tragedy":"","legacy":"","pastLifeColor":"","reincarnationSign":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate=`{${iljuKey}"sajuAnalysis":"","era":"","dynasty":"","role":"","socialClass":"","lifeStory":"","relationships":"","death":"","karma":"","talent":"","tragedy":"","legacy":"","pastLifeColor":"","reincarnationSign":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 ${sajuFactsSection}
 [작업 순서 - 반드시 지킬 것]
@@ -781,8 +966,9 @@ ${sajuStep1}
 3) 신분(role/socialClass)을 무조건 왕족·양반·영웅·고관 등 좋은 신분으로 주지 말 것. 사주 결과에 따라 평민, 노비, 몰락한 양반, 떠돌이, 생계가 어려웠던 인물 등 절반 이상의 경우 평범하거나 고단한 신분이 나오도록 한다.
 4) tragedy·death·karma는 형식적으로 넣는 게 아니라 실제로 무겁고 아프게 서술한다. 모든 사람에게 "결국은 의미 있었다", "교훈을 얻었다" 식으로 미화된 결말을 주지 말 것 — 일부는 해소되지 않은 채 씁쓸하게 끝나도 된다.
 
+${j ? `5) 전생의 신분·재능·인연·업보는 ${j.kr}일주의 기질에서 뿌리를 찾는다. 일간 ${j.ganKr}${j.ganWx}의 성정이 전생의 직업·재능이 되고, 일지 ${j.zhiKr}(${j.spouseGod})·12운성 ${j.dishi}·${j.traits[0]}이 전생의 삶의 굴곡과 인연으로 드러나게 할 것.\n` : ''}
 분석: 이 사람의 전생
-- sajuAnalysis: 위 1)의 명리학적 내부 판단 요약 60자. 절대 60자를 넘기지 말 것.
+${j ? `- iljuReading: ${j.kr}일주의 기질(일간 오행·일지 십성·12운성·일주 특성)이 전생의 신분·재능·업보로 어떻게 이어졌는지 명리학적으로 풀이 120자. 절대 120자를 넘기지 말 것.\n` : ''}- sajuAnalysis: 위 1)의 명리학적 내부 판단 요약 60자. 절대 60자를 넘기지 말 것.
 - era: 전생의 시대 (예: 조선 중기, 고려 말, 신라 통일기 등)
 - dynasty: 왕조/국가명 (예: 조선, 고려, 신라, 발해, 고구려, 가야, 일제강점기 등)
 - role: 전생의 신분/직업 (사주 근거에 따라 구체적으로. 좋은 신분에 치우치지 말 것)
@@ -799,9 +985,9 @@ ${sajuStep1}
 - description: 전생 삶에 대한 시적이고 신비로운 서술 240자 내외. 절대 240자를 넘기지 말 것.
 - fortuneTellerComment: 점술가가 의뢰인에게 직접("당신은...") 말하듯 전생 핵심 조언 170자 내외 (업보의 긍정적 측면과 주의할 점을 균형 있게). 절대 170자를 넘기지 말 것.
 - keywords: 전생을 상징하는 키워드 4개
-- imagePrompt: 영문 이미지 프롬프트. "Dramatic cinematic portrait: ${gender==='남성'?'male':'female'} figure in [dynasty] Korean historical [era] setting, [role] of [socialClass] class. Authentic period-accurate costume with intricate embroidery. Evokes [talent/key life scene]. Chiaroscuro lighting — warm torch-glow rim light piercing dense shadow. Masterful fusion of Korean ink wash painting and hyperrealistic oil portrait. Gold dust drifting in misty air. Haunting, soulful gaze. Award-winning historical illustration, cinematic composition, 8K ultra detail."`;
+- imagePrompt: 영문 이미지 프롬프트. "Dramatic cinematic portrait: ${gender==='남성'?'male':'female'} figure in [dynasty] Korean historical [era] setting, [role] of [socialClass] class. Authentic period-accurate costume with intricate embroidery. Evokes [talent/key life scene]. Chiaroscuro lighting — warm torch-glow rim light piercing dense shadow. Masterful fusion of Korean ink wash painting and hyperrealistic oil portrait. Gold dust drifting in misty air.${j ? ` Symbolic color accent of ${j.colorEn} woven into the costume and lighting.` : ''} Haunting, soulful gaze. Award-winning historical illustration, cinematic composition, 8K ultra detail."`;
   }else if(mode==='face'){
-    jsonTemplate=`{"category":"","faceType":"","eyeReading":"","noseReading":"","mouthReading":"","overallAura":"","luckyBodyPart":"","careerBest":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate=`{${iljuKey}"category":"","faceType":"","eyeReading":"","noseReading":"","mouthReading":"","overallAura":"","luckyBodyPart":"","careerBest":"","lifeFlow":"","personality":"","wealth":"","love":"","caution":"","description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 
 [사주 참고 정보]
@@ -810,7 +996,8 @@ ${sajuStep1}
 - 성별: ${gender}
 ${sajuFactsSection}
 분석 항목:
-- category: 관상 유형 (예: 목형(木形) · 귀인상). 반드시 위 오행 분포에서 가장 두드러진 오행을 반영할 것(목 기운이 강하면 목형 등).
+${j ? `- iljuReading: ${j.kr}일주의 기질이 얼굴·인상·눈빛에 어떻게 드러나는지, 사진 속 관상이 이 일주와 어울리는 점과 어긋나는 점을 명리학적으로 풀이 110자. 절대 110자를 넘기지 말 것.
+- category: 관상 유형 (예: 목형(木形) · 귀인상). 일간 ${j.ganKr}${j.ganWx}을 1순위, 오행 분포에서 가장 두드러진 오행을 2순위 근거로 삼을 것.` : `- category: 관상 유형 (예: 목형(木形) · 귀인상). 반드시 위 오행 분포에서 가장 두드러진 오행을 반영할 것(목 기운이 강하면 목형 등).`}
 - faceType: 이목구비 전체 특징 한 줄 요약
 - eyeReading: 눈 관상 상세 분석 90자 (눈빛·눈 크기·눈꼬리·운세에 미치는 영향). 절대 90자를 넘기지 말 것.
 - noseReading: 코 관상 상세 분석 60자 (코 높이·코끝·콧방울·재물운 연관)
@@ -829,16 +1016,23 @@ ${sajuFactsSection}
 - imagePrompt: 영문 이미지 프롬프트. "Mystical face reading portrait of a ${gender==='남성'?'male':'female'}, [overallAura] energy radiating. [category] physiognomy type. Dramatic chiaroscuro lighting — golden spotlight on face, deep shadow background. Ancient Korean divination symbols and zodiac signs subtly glowing in the backdrop. Penetrating, soulful gaze. Fusion of traditional fortune teller aesthetic and contemporary fine art photography. Ultra-detailed 8K, award-winning portrait."`;
   }else if(mode==='today'){
     const todayStr=new Date().toLocaleDateString('ko-KR');
-    jsonTemplate=`{"dayFlow":"","morningRitual":"","avoidAction":"","luckyFood":"","luckyPerson":"","moneyLuck":"","loveLuck":"","healthLuck":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","naeryeok":"","successQuote":"","fortuneTellerComment":""}`;
+    const tj = saju ? saju.todayIljin : null;
+    const iljinFacts = (j && tj) ? `
+[오늘의 일진 - 만세력 계산값, 그대로 사용할 것]
+- 오늘 일진: ${tj.kr}(${tj.hanja})일
+- 오늘 천간 ${tj.hanja[0]}는 내 일간 ${j.gan} 기준 ${tj.ganGod}, 오늘 지지 ${tj.hanja[1]}는 ${tj.zhiGod}
+- 내 ${j.kr}(${j.hanja})일주와 오늘 일진의 관계: ${tj.relations.length ? tj.relations.join(', ') : '뚜렷한 합·충·형·해 없음(평이한 관계)'}
+` : '';
+    jsonTemplate=`{${iljuKey}"dayFlow":"","morningRitual":"","avoidAction":"","luckyFood":"","luckyPerson":"","moneyLuck":"","loveLuck":"","healthLuck":"","luckyElements":[{"category":"","value":""}],"cautions":[{"title":"","desc":""}],"hourlyFlow":[{"hour":"","score":0,"label":""}],"mentorAdvice":"","naeryeok":"","successQuote":"","fortuneTellerComment":""}`;
     modeInstruction=`분석: 오늘의 운세 (기준 날짜: ${todayStr})
 시스템 톤: 명리학에 근거한 중립적이고 객관적인 멘토. 근거 없는 위로나 막연한 균형 맞추기 없이, 실제 판단대로 솔직하게 말한다.
-${sajuFactsSection}
+${sajuFactsSection}${iljinFacts}
 [작업 순서 - 반드시 지킬 것]
 ${sajuFacts ? '1) 위 [실제 계산된 사주 정보]를 그대로 근거로 삼아 일간의 강약, 오행의 과다·부족, 용신·희신·기신을 판단한다(오행 수치 자체는 절대 다르게 쓰지 말 것).' : `1) 생년월일시(${birthDate}, ${birthHour}, ${gender})로 사주팔자를 세우고 일간의 강약, 오행의 과다·부족, 용신·희신·기신을 판단한다.`}
-2) 오늘(${todayStr})의 일진(오늘의 천간·지지)이 이 사람의 사주와 용신운/기신운/충(沖)·형(刑)·합(合) 중 무엇에 해당하는지 실제로 따져본다.
+${iljinFacts ? `2) 위 [오늘의 일진]과 내 ${j.kr}일주의 관계(계산된 합·충·형·해·원진과 십성 ${tj.ganGod}/${tj.zhiGod})를 오늘 운세의 1순위 근거로 삼고, 오늘 일진의 오행이 용신·희신·기신 중 무엇인지 함께 따진다. 일진이나 관계를 새로 계산하거나 바꾸지 말 것.` : `2) 오늘(${todayStr})의 일진(오늘의 천간·지지)이 이 사람의 사주와 용신운/기신운/충(沖)·형(刑)·합(合) 중 무엇에 해당하는지 실제로 따져본다.`}
 3) 그 판단 결과, 오늘이 이 사람에게 뚜렷하게 좋은 날인지 나쁜 날인지 애매하게 얼버무리지 말고 분명히 밝힌다. 기신운·충·형에 해당하면 dayFlow·cautions·mentorAdvice가 실제로 주의를 요하는 톤이어야 하며, 억지로 좋게 포장하지 않는다. 반대로 용신운이면 그에 맞게 뚜렷이 긍정적으로 쓴다. 모든 사람이 매번 비슷하게 "무난한 하루"로 나오지 않도록, 그날그날의 실제 기복을 반영한다.
 
-- dayFlow: 오늘 하루 전체적인 기운 흐름 (2~3문장). 2)의 판단에 따라 길하면 길하게, 흉하면 분명히 흉하게 쓸 것 — 매번 균형을 맞추지 말 것.
+${j ? `- iljuReading: ${iljinFacts ? `오늘 ${tj.kr}일과 내 ${j.kr}일주가 만나 생기는 작용(합·충·형 등과 십성의 의미)` : `${j.kr}일주의 기질이 오늘 하루에 작용하는 방식`}을 명리학적으로 풀이 110자. 절대 110자를 넘기지 말 것.\n` : ''}- dayFlow: 오늘 하루 전체적인 기운 흐름 (2~3문장). 2)의 판단에 따라 길하면 길하게, 흉하면 분명히 흉하게 쓸 것 — 매번 균형을 맞추지 말 것.
 - morningRitual: 오늘 아침 반드시 해야 할 구체적 행동 1가지 (예: "동쪽 창문을 열고 햇빛 5분 쐬기") 50자
 - avoidAction: 오늘 절대 피해야 할 행동과 그 이유 50자
 - luckyFood: 오늘의 행운 음식과 기운적 효과 30자
@@ -854,11 +1048,15 @@ ${sajuFacts ? '1) 위 [실제 계산된 사주 정보]를 그대로 근거로 �
 - successQuote: 오늘의 사주 기운과 어울리는 동서양 성공 격언 또는 명언 1개 (한국어로, 출처·인물명 포함)
 - fortuneTellerComment: 점술가 스타일의 마무리 한 줄`;
   }else{
-    jsonTemplate=`{"firstMeeting":"","appearance":"","height":"","voice":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","hobby":"","firstGift":"","meetingSeason":"","weddingStyle":"","compatibilityScore":0,"description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
+    jsonTemplate=`{${iljuKey}"firstMeeting":"","appearance":"","height":"","voice":"","celebrity":"","animalFace":"","job":"","signs":"","personality":"","hobby":"","firstGift":"","meetingSeason":"","weddingStyle":"","compatibilityScore":0,"description":"","fortuneTellerComment":"","keywords":["","","",""],"imagePrompt":""}`;
     modeInstruction=`분석 톤: 명리학에 근거한 중립적이고 객관적인 술사. 강점과 약점, 길한 기운과 흉한 기운을 균형 있게 서술한다. 근거 없는 과장이나 막연한 위로 없이 사주에 근거하여 사실적으로 읽어준다. 점술가 특유의 무게감과 품위는 유지한다.
 ${sajuFactsSection}
 분석: 이 사람의 미래 배우자. 배우자상과 compatibilityScore(궁합 점수)는 위 오행 분포(용신/기신에 해당할 오행이 배우자에게 있는지 등)를 근거로 판단하고, 모든 사람에게 비슷하게 높은 점수를 주지 말 것.
-- firstMeeting: 처음 만나는 상황과 장소
+${j ? `[배우자궁 판단 기준 - 반드시 지킬 것]
+- 배우자궁 = 일지 ${j.zhiKr}(${j.zhi}). 배우자의 외모·성격·직업·만남 방식은 배우자궁 십성 ${j.spouseGod}, 일지 오행 ${j.zhiWx}, 지장간(${j.hideGans.join(', ')}), 일간이 일지에서 맺는 12운성 ${j.dishi}을(를) 1순위 근거로 삼는다.
+- ${j.traits.join(', ')}이(가) 연애·결혼 방식에 미치는 영향을 반영한다.
+${j.harmonyIlju ? `- 내 일주와 천간합·지지육합을 모두 이루는 천지합(天地合) 일주는 ${j.harmonyIlju}이다. 배우자로 가장 끌리는 기운의 참고로 쓴다.\n` : ''}${j.clashIlju ? `- 내 일주와 천간충·지지충을 모두 이루는 천극지충(天剋地沖) 일주는 ${j.clashIlju}이다. 부딪치기 쉬운 상대의 참고로 쓴다.\n` : ''}- iljuReading: ${j.kr}일주의 배우자궁(일지 ${j.zhiKr}·${j.spouseGod}·12운성 ${j.dishi})이 말해주는 배우자상과 결혼 생활의 특징을 명리학적으로 풀이 130자. 절대 130자를 넘기지 말 것.
+` : ''}- firstMeeting: 처음 만나는 상황과 장소
 - appearance: 배우자 외모 묘사 130자 (이목구비·분위기·인상 포함). 절대 130자를 넘기지 말 것.
 - height: 키와 체형 묘사 30자
 - voice: 목소리 특징 40자
@@ -895,6 +1093,52 @@ ${jsonTemplate}`;
 // HTML escape helper
 function esc(s){if(!s&&s!==0)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+// 결과 카드 상단의 일주 패널 (계산값은 코드가, 해석은 AI가 채움)
+function iljuPanelHtml(data, mode){
+  const saju = lastResult && lastResult.saju;
+  if(!saju || !saju.ilju) return '';
+  const j = saju.ilju;
+  const cols = saju.pillarCols.map(c=>{
+    if(!c.gan) return `<div class="pillar-col"><div class="pillar-label">${c.label}</div><div class="pillar-char pillar-empty">?</div><div class="pillar-char pillar-empty">?</div><div class="pillar-god">미상</div></div>`;
+    return `<div class="pillar-col${c.isDay?' is-day':''}">
+      <div class="pillar-label">${c.label}</div>
+      <div class="pillar-god">${c.ganGod}</div>
+      <div class="pillar-char wx-${WX_CLASS[GAN_WX[c.gan]]}">${c.gan}<small>${GAN_KR[c.gan]}${GAN_WX[c.gan]}</small></div>
+      <div class="pillar-char wx-${WX_CLASS[ZHI_WX[c.zhi]]}">${c.zhi}<small>${ZHI_KR[c.zhi]}${ZHI_WX[c.zhi]}</small></div>
+      <div class="pillar-god">${c.zhiGod}</div>
+    </div>`;
+  }).join('');
+  const badges = j.traits.map(t=>`<span class="ilju-badge">${esc(t)}</span>`).join('');
+  let extra = '';
+  if(mode==='spouse'){
+    extra = `<div class="ilju-facts">
+      <div><b>배우자궁</b> 일지 ${j.zhiKr}(${j.zhi}) · ${j.spouseGod}</div>
+      ${j.harmonyIlju?`<div><b>천생연분 일주</b> ${j.harmonyIlju} · 천지합</div>`:''}
+      ${j.clashIlju?`<div><b>부딪치기 쉬운 일주</b> ${j.clashIlju} · 천극지충</div>`:''}
+    </div>`;
+  } else if(mode==='today' && saju.todayIljin){
+    const tj = saju.todayIljin;
+    extra = `<div class="ilju-facts">
+      <div><b>오늘 일진</b> ${tj.kr}(${tj.hanja})일 · ${tj.ganGod}/${tj.zhiGod}</div>
+      <div><b>내 일주와의 관계</b> ${tj.relations.length?esc(tj.relations.join(', ')):'뚜렷한 합·충 없음'}</div>
+    </div>`;
+  }
+  return `<div class="ilju-panel">
+    <div class="ilju-label">나의 일주 · DAY PILLAR</div>
+    <div class="ilju-name"><span class="ilju-hanja">${j.hanja}</span><span class="ilju-kr">${j.kr}일주</span></div>
+    <div class="ilju-symbol">${j.symbol} · ${j.nayin}</div>
+    <div class="pillar-grid">${cols}</div>
+    <div class="ilju-facts">
+      <div><b>일간</b> ${j.ganKr}${j.ganWx}(${j.ganYY}) · <b>일지</b> ${j.zhiKr}${j.zhiWx}</div>
+      <div><b>지장간</b> ${j.hideGans.join(', ')} · <b>12운성</b> ${j.dishi} · <b>공망</b> ${j.kongmang}</div>
+    </div>
+    ${extra}
+    <div class="ilju-badges">${badges}</div>
+    ${data && data.iljuReading ? `<div class="ilju-reading">${esc(data.iljuReading)}</div>` : ''}
+    ${saju.jasi ? `<div class="ilju-note">* 자시(23~01시) 출생은 입력한 날짜 기준으로 일주를 계산했습니다.</div>` : ''}
+  </div>`;
+}
+
 function displayResult(data,imgUrl,mode){
   if(lastResult)lastResult.imgUrl=imgUrl;
   document.getElementById('pastLifeCard').style.display='none';
@@ -929,6 +1173,7 @@ function renderPastResult(data,imgUrl){
   `;
   card.innerHTML=`
     <div class="result-card-title">전생 모습 보기<small>PAST LIFE VISION</small></div>
+    ${iljuPanelHtml(data,'past')}
     <div class="result-desc">${esc(data.description)}</div>
     <div class="fortune-comment"><div class="fortune-label">✦ 점술가의 말</div><div class="fortune-text">${esc(data.fortuneTellerComment)}</div></div>
     <div class="image-frame" style="position:relative;">${imgEl}<div class="image-placeholder" id="pastLifeImgPh" style="${imgUrl?'display:none;':''}">전생의 기억을 불러오는 중...</div></div>
@@ -962,6 +1207,7 @@ function renderSpouseResult(data,imgUrl){
   `;
   card.innerHTML=`
     <div class="result-card-title">미래 배우자<small>DESTINED PARTNER</small></div>
+    ${iljuPanelHtml(data,'spouse')}
     <div class="result-desc">${esc(data.description)}</div>
     <div class="fortune-comment"><div class="fortune-label">✦ 점술가의 말</div><div class="fortune-text">${esc(data.fortuneTellerComment)}</div></div>
     <div class="image-frame" style="position:relative;">${imgEl}<div class="image-placeholder" id="spouseImgPh" style="${imgUrl?'display:none;':''}">운명의 인연을 불러오는 중...</div></div>
@@ -994,6 +1240,7 @@ function renderFaceResult(data,imgUrl){
   `;
   card.innerHTML=`
     <div class="result-card-title">관상 보기<small>FACE READING</small></div>
+    ${iljuPanelHtml(data,'face')}
     <div class="result-desc">${esc(data.description)}</div>
     <div class="fortune-comment"><div class="fortune-label">✦ 점술가의 말</div><div class="fortune-text">${esc(data.fortuneTellerComment)}</div></div>
     <div class="image-frame" style="position:relative;">${imgEl}<div class="image-placeholder" id="faceImgPh" style="${imgUrl?'display:none;':''}">관상을 읽는 중...</div></div>
@@ -1022,6 +1269,7 @@ function renderToday(data){
 
   document.getElementById('todayMeta').textContent=`오늘의 운세 · ${new Date().toLocaleDateString()}`;
   document.getElementById('todayFlow').textContent=data.dayFlow;
+  document.getElementById('todayIljuPanel').innerHTML=iljuPanelHtml(data,'today');
 
   const luckyGrid=document.getElementById('todayLuckyElements');
   luckyGrid.innerHTML=(data.luckyElements||[]).map(el=>`
@@ -1086,8 +1334,28 @@ function renderToday(data){
 
 async function exportPDF(){
   if(!lastResult)return;
-  const{parsed,name,birthDate,birthHour,gender,calType,mode}=lastResult;
+  const{parsed,name,birthDate,birthHour,gender,calType,mode,saju}=lastResult;
   const today=new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+  const ij = saju && saju.ilju;
+  const tj = saju && saju.todayIljin;
+  // 일주 전용 페이지 (각 결과 페이지는 A4 한 장에 고정되어 있어 별도 페이지로 추가)
+  const iljuPdf = ij ? `
+    <div class="pdf-section-title">나의 일주 · DAY PILLAR</div>
+    <div class="pdf-ilju-name">${ij.hanja} <b>${ij.kr}일주</b><span>${ij.symbol} · ${ij.nayin}</span></div>
+    <table class="pdf-pillar-table">
+      <tr>${saju.pillarCols.map(c=>`<th class="${c.isDay?'is-day':''}">${c.label}</th>`).join('')}</tr>
+      <tr>${saju.pillarCols.map(c=>`<td class="${c.isDay?'is-day':''}">${c.gan?`<small>${c.ganGod}</small>${c.gan} ${GAN_KR[c.gan]}`:'미상'}</td>`).join('')}</tr>
+      <tr>${saju.pillarCols.map(c=>`<td class="${c.isDay?'is-day':''}">${c.zhi?`${c.zhi} ${ZHI_KR[c.zhi]}<small>${c.zhiGod}</small>`:'미상'}</td>`).join('')}</tr>
+    </table>
+    <div class="pdf-info-blocks">
+      <div class="pdf-info-block"><span class="pdf-info-title">✦ 일간 · 일지: </span><span class="pdf-info-text">${ij.ganKr}${ij.ganWx}(${ij.ganYY}) · ${ij.zhiKr}${ij.zhiWx}</span></div>
+      <div class="pdf-info-block"><span class="pdf-info-title">✦ 배우자궁 · 지장간: </span><span class="pdf-info-text">${ij.spouseGod} · ${ij.hideGans.join(', ')}</span></div>
+      <div class="pdf-info-block"><span class="pdf-info-title">✦ 12운성 · 공망: </span><span class="pdf-info-text">${ij.dishi} · ${ij.kongmang}</span></div>
+      <div class="pdf-info-block"><span class="pdf-info-title">✦ 일주 특성: </span><span class="pdf-info-text">${ij.traits.join(', ')}</span></div>
+      ${mode==='spouse'&&ij.harmonyIlju?`<div class="pdf-info-block"><span class="pdf-info-title">✦ 천생연분 일주: </span><span class="pdf-info-text">${ij.harmonyIlju}${ij.clashIlju?` / 부딪치기 쉬운 일주 ${ij.clashIlju}`:''}</span></div>`:''}
+      ${mode==='today'&&tj?`<div class="pdf-info-block"><span class="pdf-info-title">✦ 오늘 일진: </span><span class="pdf-info-text">${tj.kr}(${tj.hanja}) · ${tj.ganGod}/${tj.zhiGod} · ${tj.relations.length?tj.relations.join(', '):'뚜렷한 합·충 없음'}</span></div>`:''}
+    </div>
+    ${parsed.iljuReading?`<div class="pdf-fortune"><div class="pdf-fortune-label">✦ 일주 해석</div><div class="pdf-fortune-text">${esc(parsed.iljuReading)}</div></div>`:''}` : '';
   const imgEl=document.getElementById(mode==='past'?'pastLifeImg':(mode==='face'?'faceImg':'spouseImg'));
   const imgShown=imgEl&&imgEl.style.display!=='none'&&imgEl.src;
   const imgHtml=imgShown?`<img src="${imgEl.src}" alt="결과 이미지" crossorigin="anonymous">`:`<div class="pdf-img-placeholder">이미지를 불러올 수 없습니다</div>`;
@@ -1224,6 +1492,14 @@ __TODAY_PAGE2__:
     .pdf-info-table{width:100%;border-collapse:collapse;margin-bottom:18px;}
     .pdf-info-table td{padding:7px 12px;font-size:13px;border-bottom:1px solid #f0e8d8;color:#3a2a10;}
     .pdf-info-table td:first-child{color:#8b5e1a;width:28%;letter-spacing:1px;}
+    .pdf-ilju-name{text-align:center;font-family:'Nanum Myeongjo',serif;font-size:34px;font-weight:800;color:#8b5e1a;letter-spacing:4px;margin:6px 0 14px;}
+    .pdf-ilju-name b{font-size:20px;color:#1a1008;margin-left:8px;letter-spacing:2px;}
+    .pdf-ilju-name span{display:block;font-family:'Gowun Batang',serif;font-size:12px;font-weight:400;color:#7a6040;letter-spacing:2px;margin-top:4px;}
+    .pdf-pillar-table{width:80%;margin:0 auto 18px;border-collapse:collapse;text-align:center;}
+    .pdf-pillar-table th,.pdf-pillar-table td{border:1px solid #e8dcc8;padding:6px 4px;font-size:16px;font-family:'Nanum Myeongjo',serif;color:#3a2a10;}
+    .pdf-pillar-table th{font-size:11px;color:#7a6040;font-weight:400;}
+    .pdf-pillar-table small{display:block;font-size:9px;color:#999;font-family:'Gowun Batang',serif;}
+    .pdf-pillar-table .is-day{background:#fdf3dc;color:#8b5e1a;font-weight:700;}
     .pdf-footer{position:absolute;bottom:28px;left:64px;right:64px;text-align:center;font-size:10px;color:#bbb;letter-spacing:2px;border-top:1px solid #e8dcc8;padding-top:8px;}
   </style>`;
 
@@ -1248,17 +1524,27 @@ __TODAY_PAGE2__:
     pagesHtml = `
       <div class="pdf-page">
         ${pdfHeaderHtml}${pdfInfoTableHtml}${page1Body}
-        <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today} · 1/2</div>
+        <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today} · 1/${iljuPdf?3:2}</div>
       </div>
       <div class="pdf-page">
         ${pdfHeaderHtml}${page2Body}
-        <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today} · 2/2</div>
+        <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today} · 2/${iljuPdf?3:2}</div>
+      </div>`;
+    if(iljuPdf) pagesHtml += `
+      <div class="pdf-page">
+        ${pdfHeaderHtml}${iljuPdf}
+        <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today} · 3/3</div>
       </div>`;
   } else {
     pagesHtml = `
       <div class="pdf-page">
         ${pdfHeaderCompactHtml}${bodyHtml}
         <div class="pdf-footer">전체 결과는 운명의 거울 앱에서 확인하세요 · 사주 분석 결과 · ${today}</div>
+      </div>`;
+    if(iljuPdf) pagesHtml += `
+      <div class="pdf-page">
+        ${pdfHeaderCompactHtml}${iljuPdf}
+        <div class="pdf-footer">운명의 거울 · 사주 분석 결과 · ${today}</div>
       </div>`;
   }
   printAreaEl.innerHTML = pdfInlineStyles + pagesHtml;
